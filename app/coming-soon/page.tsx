@@ -77,10 +77,10 @@ export default function ComingSoon() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-4xl">
                     <FeatureCard
                         title="النص الكامل للقرآن الكريم"
-                        description="الوصول إلى النص الكامل للقرآن مع النص العربي الدقيق  ."
+                        description="الوصول إلى النص الكامل للقرآن مع النص العربي الدقيق."
                     />
                     <FeatureCard
                         title="تلاوات صوتية"
@@ -97,6 +97,7 @@ export default function ComingSoon() {
                 </footer>
             </main>
         </div>
+
     )
 }
 
