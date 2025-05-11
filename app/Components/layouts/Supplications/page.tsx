@@ -5,7 +5,6 @@ export default function page() {
   return (
     <>
       <SupplicationsHead />
-      {/*<SupplicationsFilters/>*/}
     </>
   )
 }
