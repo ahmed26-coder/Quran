@@ -11,3 +11,8 @@ export function middleware(request: NextRequest) {
 
   return NextResponse.next()
 }
+
+// middleware.ts
+export const config = {
+  matcher: ['/', '/((?!_next|api|coming-soon).*)'],
+}
