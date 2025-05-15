@@ -8,7 +8,7 @@ import { DataStudies } from '@/Constents'
 
 export function HomeSection() {
     return (
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 to-white dark:to-black ">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 to-white dark:from-gray-900 dark:to-black ">
             <div className="container px-4 md:px-6 max-w-7xl mx-auto">
                 <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
                     <div className="flex flex-col justify-center space-y-4">
@@ -81,7 +81,7 @@ export function Studies() {
 
 export function Sheikhs() {
     return (
-        <section className=" bg-secondar/10 py-12 xl:py-20 dark:bg-black">
+        <section className=" bg-secondar/10 py-12 dark:from-gray-900 xl:py-20 dark:bg-black">
             <div className=" max-w-7xl mx-auto">
                 <SectionTitle title='الشيوخ المميزون' description='استمع إلى تلاوات من هؤلاء القراء المشهورين للقرآن الكريم' highlighted={false} />
                 <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
@@ -150,7 +150,7 @@ export function Supplications() {
 
 export function Team() {
     return(
-        <section className="bg-secondar/10 py-12 xl:py-20 dark:bg-black">
+        <section className="bg-secondar/10 dark:from-gray-900 py-12 xl:py-20 dark:bg-black">
             <div className=" max-w-7xl mx-auto">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
               <div className="flex flex-col justify-center space-y-4">

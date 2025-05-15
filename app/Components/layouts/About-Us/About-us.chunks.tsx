@@ -5,7 +5,7 @@ import { Star, Target } from 'lucide-react'
 
 export function AboutHead() {
     return (
-        <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 to-white dark:to-black ">
+        <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 dark:from-gray-900 to-white dark:to-black ">
             <div className=" max-w-7xl mx-auto">
                 <SectionHead title='عن بوابة القرآن' description='منصة إسلامية حديثة تهدف إلى تقديم القرآن الكريم والتعاليم الإسلامية بطريقة سهلة وجذابة' />
             </div>
@@ -61,7 +61,7 @@ export function AboutGate() {
 
 export function AboutStart() {
     return (
-        <section className="w-full py-12 xl:py20 bg-secondar/15 dark:bg-black">
+        <section className="w-full py-12 xl:py20 bg-secondar/15 dark:from-gray-900 dark:bg-black">
             <div className="container max-w-7xl mx-auto px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <SectionHead title='قصة بوابة القرآن' description='كيف بدأت رحلتنا في خدمة القرآن الكريم والمسلمين حول العالم' />
@@ -134,7 +134,7 @@ export function AboutServices() {
 
 export function AboutValues() {
     return (
-        <section className="w-full py-12 xl:py-20 bg-secondar/15 dark:bg-black">
+        <section className="w-full py-12 xl:py-20 bg-secondar/15 dark:from-gray-900 dark:bg-black">
             <div className="container max-w-7xl mx-auto px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <SectionHead title='قيمنا ومبادئنا' description='المبادئ التي نلتزم بها في عملنا وخدمتنا للمجتمع الإسلامي' />
@@ -203,7 +203,7 @@ export function AboutUser() {
 
 export function AboutPlan() {
     return (
-        <section className="w-full py-12 xl:py-20 bg-secondar/15 dark:bg-black">
+        <section className="w-full py-12 xl:py-20 bg-secondar/15 dark:from-gray-900 dark:bg-black">
             <div className="container max-w-7xl mx-auto px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <SectionHead title='خططنا المستقبلية' description='نسعى دائماً للتطوير والتحسين لتقديم أفضل تجربة ممكنة للمستخدمين' />

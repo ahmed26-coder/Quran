@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Nav from "./Components/Nav";
-import Footer from "./Components/Footer";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,9 +31,18 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" className="dark" suppressHydrationWarning >
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Nav />
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: '#000',
+                color: '#0f0',
+                fontSize: '16px',
+              },
+              className: 'custom-toast',
+            }}
+          />
           {children}
-          <Footer />
         </ThemeProvider>
       </body>
     </html>

@@ -1,10 +1,9 @@
 import React from 'react'
-import Contact from "../Components/layouts/Contact-Us/page"
-
+import Quran from "../../Components/layouts/Qeran/page"
 export default function page() {
   return (
     <>
-      <Contact />
+    <Quran />
     </>
   )
 }

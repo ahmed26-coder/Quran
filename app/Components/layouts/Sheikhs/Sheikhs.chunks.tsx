@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 
 export function SheikhsHead() {
     return (
-        <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 to-white dark:to-black">
+        <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 dark:from-gray-900 to-white dark:to-black">
             <div className=" max-w-7xl mx-auto">
                 <SectionHead title='الشيوخ والقراء المشهورون' description='استكشف الملفات الشخصية واستمع إلى تلاوات من علماء وقراء القرآن المحترمين من جميع أنحاء العالم.' />
                 <form action="" className=" w-[30%] mt-4 mx-auto relative">

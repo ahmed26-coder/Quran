@@ -1,9 +1,12 @@
 import React from 'react'
-import Quran from "../Components/layouts/Qeran/page"
+import About from "../../Components/layouts/About-Us/page"
+
+
 export default function page() {
   return (
     <>
-    <Quran />
+
+      <About />
     </>
   )
 }

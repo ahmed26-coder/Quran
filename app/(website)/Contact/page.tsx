@@ -1,9 +1,10 @@
 import React from 'react'
-import Sheikhs from "../Components/layouts/Sheikhs/page"
+import Contact from "../../Components/layouts/Contact-Us/page"
+
 export default function page() {
   return (
     <>
-    <Sheikhs />
+      <Contact />
     </>
   )
 }

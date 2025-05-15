@@ -1,9 +1,10 @@
 "use client";
 import { useState } from 'react';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase';
 import { Send } from "lucide-react";
 import Button from "../../ui/Button";
 import ContactText from "./contact-us.chunks";
+import { toast } from "sonner";
 
 export function ContactForm() {
   const [firstName, setFirstName] = useState('');
@@ -16,7 +17,7 @@ export function ContactForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const { error } = await supabase.from('Contact').insert([
+    const { error } = await supabase.from("Contact").insert([
       {
         first_name: firstName,
         last_name: lastName,
@@ -28,17 +29,43 @@ export function ContactForm() {
     ]);
 
     if (error) {
-        alert('حدث خطأ: ' + error.message);
+      toast("فشل في الإرسال", {
+        style: {
+          backgroundColor: "#000",
+          color: "#F44336",
+          borderRadius: '12px',
+          padding: '16px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          fontSize: '16px',
+          textAlign: 'center',
+          maxWidth: '400px',
+          margin: 'auto',
+          transition: 'all 0.3s ease-in-out',
+        },
+      });
     } else {
-        alert('تم إرسال الرسالة بنجاح ✅');
-        setFirstName('');
-        setLastName('');
-        setPhone('');
-        setEmail('');
-        setSubject('');
-        setMessage('');
+      toast("تم الإرسال", {
+        style: {
+          backgroundColor: "#000",
+          color: "#4CAF50",
+          borderRadius: '12px',
+          padding: '16px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          fontSize: '16px',
+          textAlign: 'center',
+          maxWidth: '400px',
+          margin: 'auto',
+          transition: 'all 0.3s ease-in-out',
+        },
+      });
+      setFirstName("");
+      setLastName("");
+      setPhone("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
     }
-};
+  };
 
   return (
     <section className="w-full py-12 md:py-24">

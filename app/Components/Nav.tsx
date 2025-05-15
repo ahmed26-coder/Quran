@@ -17,20 +17,20 @@ export default function Nav() {
                     <Moon className="h-10 w-10 text-emerald-600" />
                     <span className="text-3xl font-bold">بوابة القرآن</span>
                 </Link>
-
-                <nav className="hidden lg:flex gap-6">
-                    {DataNav.map((item, index) => (
-                        <Link
-                            key={index}
-                            href={item.link}
-                            className="text-lg font-medium transition-colors hover:text-emerald-600"
-                        >
-                            {item.title}
-                        </Link>
-                    ))}
-                </nav>
-
-                <ThemeToggle />
+                <div className=" flex items-center lg:gap-5 mr-11 ">
+                    <nav className="hidden lg:flex items-center gap-6">
+                        {DataNav.map((item, index) => (
+                            <Link
+                                key={index}
+                                href={item.link}
+                                className="text-lg font-medium transition-colors hover:text-emerald-600"
+                            >
+                                {item.title}
+                            </Link>
+                        ))}
+                    </nav>
+                    <ThemeToggle />
+                </div>
 
                 <div className="lg:hidden">
                     <button onClick={toggleMenu} className="p-2">
@@ -41,7 +41,7 @@ export default function Nav() {
             </div>
 
             {isOpen && (
-                <nav className="lg:hidden bg-background bg-white z-50 absolute w-full mx-auto shadow-sm rounded-b-md animate-slide-down">
+                <nav className="lg:hidden dark:bg-black p-5 bg-white z-50 absolute w-full mx-auto shadow-sm rounded-b-md animate-slide-down">
                     <div className="flex flex-col gap-4 p-4">
                         {DataNav.map((item, index) => (
                             <Link
@@ -54,7 +54,6 @@ export default function Nav() {
                             </Link>
                         ))}
                     </div>
-                    <ThemeToggle />
                 </nav>
             )}
         </header>

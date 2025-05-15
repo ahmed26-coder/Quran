@@ -1,12 +1,9 @@
 import React from 'react'
-import About from "../Components/layouts/About-Us/page"
-
-
+import Sheikhs from "../../Components/layouts/Sheikhs/page"
 export default function page() {
   return (
     <>
-
-      <About />
+    <Sheikhs />
     </>
   )
 }

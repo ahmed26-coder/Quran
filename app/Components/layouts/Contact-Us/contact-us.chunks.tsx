@@ -4,7 +4,7 @@ import { contactInfo, DataFaq } from '@/Constents';
 
 export function ContactHead() {
     return (
-        <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 to-white dark:to-black ">
+        <div className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-secondar/15 dark:from-gray-900 to-white dark:to-black ">
             <div className=" max-w-7xl mx-auto">
                 <SectionHead title='اتصل بنا' description='نحن هنا للإجابة على أسئلتكم واستقبال اقتراحاتكم. لا تترددوا في التواصل معنا.' />
             </div>
@@ -70,14 +70,14 @@ export default function ContactText() {
 
 export function ContactFAQ() {
     return (
-        <section className="w-full py-12 xl:py-20 bg-secondar/10">
+        <section className="w-full py-12 xl:py-20 bg-secondar/10 dark:bg-gray-900">
             <div className="container max-w-7xl mx-auto px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center">
                     <SectionHead title='الأسئلة الشائعة' description='إجابات على الأسئلة الأكثر شيوعاً' />
                 </div>
                 <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2">
                     {DataFaq.map((faq, i) => (
-                        <div key={i} className="rounded-lg border hover:shadow-md border-gray-300 bg-white p-6 shadow-sm">
+                        <div key={i} className="rounded-lg border hover:shadow-md border-gray-300 bg-white dark:text-black p-6 shadow-sm">
                             <h3 className="text-xl font-bold">{faq.question}</h3>
                             <p className="mt-2 text-muted-foreground">{faq.answer}</p>
                         </div>
