@@ -22,6 +22,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-toastify": "^11.0.5",
+    "resend": "^4.5.1",
     "shadcn-ui": "^0.9.5",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.3.0",

@@ -18,38 +18,45 @@ export default function ComingSoon() {
             .from("subscribers")
             .insert([{ email: emailValue }]);
 
-    if (error) {
-      toast("فشل في الإرسال", {
-        style: {
-          backgroundColor: "#000",
-          color: "#F44336",
-          borderRadius: '12px',
-          padding: '16px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          fontSize: '16px',
-          textAlign: 'center',
-          maxWidth: '400px',
-          margin: 'auto',
-          transition: 'all 0.3s ease-in-out',
-        },
-      });
-    } else {
-      toast("تم الإرسال", {
-        style: {
-          backgroundColor: "#000",
-          color: "#4CAF50",
-          borderRadius: '12px',
-          padding: '16px',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          fontSize: '16px',
-          textAlign: 'center',
-          maxWidth: '400px',
-          margin: 'auto',
-          transition: 'all 0.3s ease-in-out',
-        },
-      });
-      setMessage("");
-    }
+        if (error) {
+            toast("فشل في الإرسال", {
+                style: {
+                    backgroundColor: "#000",
+                    color: "#F44336",
+                    borderRadius: '12px',
+                    padding: '16px',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    fontSize: '16px',
+                    textAlign: 'center',
+                    maxWidth: '400px',
+                    margin: 'auto',
+                    transition: 'all 0.3s ease-in-out',
+                },
+            });
+        } else {
+            await fetch("/api/send-welcome-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: emailValue }),
+            });
+            toast("تم الإرسال", {
+                style: {
+                    backgroundColor: "#000",
+                    color: "#4CAF50",
+                    borderRadius: '12px',
+                    padding: '16px',
+                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                    fontSize: '16px',
+                    textAlign: 'center',
+                    maxWidth: '400px',
+                    margin: 'auto',
+                    transition: 'all 0.3s ease-in-out',
+                },
+            });
+
+            setMessage("");
+        }
+
     };
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-white dark:from-gray-900 dark:to-black p-4 relative overflow-hidden">
