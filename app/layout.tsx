@@ -36,14 +36,18 @@ export default function RootLayout({
             toastOptions={{
               style: {
                 background: '#000',
-                width: "300px",
+                width: '150px',
                 color: '#0f0',
                 fontSize: '16px',
-                margin: "auto",
+                margin: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               },
-              className: 'custom-toast',
+              className: 'custom-toast' // فقط إذا كانت مكتبة sonner تدعمها
             }}
           />
+
           {children}
         </ThemeProvider>
       </body>
