@@ -36,8 +36,10 @@ export default function RootLayout({
             toastOptions={{
               style: {
                 background: '#000',
+                width: "300px",
                 color: '#0f0',
                 fontSize: '16px',
+                margin: "auto",
               },
               className: 'custom-toast',
             }}
