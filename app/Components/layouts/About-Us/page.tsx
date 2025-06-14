@@ -1,5 +1,5 @@
 import React from 'react'
-import { AboutGate, AboutHead, AboutServices, AboutValues, AboutUser, AboutStart, AboutPlan } from './About-us.chunks'
+import { AboutGate, AboutHead, AboutServices, AboutValues, AboutUser, AboutStart, AboutPlan } from './about-us.chunks'
 
 export default function page() {
   return (

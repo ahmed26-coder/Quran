@@ -19,7 +19,7 @@ export const DataNav = [
   },
   {
     title: "عن الموقع",
-    link: "/About",
+    link: "/about",
   },
   {
     title: " اتصل بنا",
