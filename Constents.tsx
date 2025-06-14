@@ -1,4 +1,14 @@
-im
+import { BookOpen, Heart, Users, Award, Lightbulb, Handshake, Globe, BookMarked, Bookmark, Mail, Phone, MapPin } from "lucide-react";
+
+export const DataNav = [
+  {
+    title: "الرئيسية",
+    link: "/",
+  },
+  {
+    title: "القرآن الكريم",
+    link: "/Quran",
+  },
   {
     title: "الشيوخ",
     link: "/Sheikhs",
