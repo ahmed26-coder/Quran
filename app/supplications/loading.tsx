@@ -1,3 +1,5 @@
+import { SupplicationsSkeleton } from '@/components/loading-skeletons'
+
 export default function Loading() {
-  return null
+  return <SupplicationsSkeleton />
 }

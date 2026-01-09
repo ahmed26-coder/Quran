@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Moon, Search } from "lucide-react"
 import { MobileNav } from "@/components/mobile-nav"
 import { HijriDate } from "@/components/hijri-date"
-import { GlobalSearch } from "@/components/global-search"
+import { GlobalSearchLazy } from "@/components/global-search-lazy"
 
 export function SiteHeader() {
   return (
@@ -38,7 +38,7 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <GlobalSearch />
+          <GlobalSearchLazy />
           <ThemeToggle />
           <Button variant="outline" className="hidden md:flex bg-transparent">
             تسجيل الدخول

@@ -10,17 +10,61 @@ const tajawal = Tajawal({
   subsets: ["arabic"],
   weight: ["400", "500", "700"],
   variable: "--font-tajawal",
+  display: "swap",
+  preload: true,
 })
 
 const amiri = Amiri({
   subsets: ["arabic"],
   weight: ["400", "700"],
   variable: "--font-amiri",
+  display: "swap",
+  preload: true,
 })
 
+
 export const metadata = {
-  title: "بوابة القرآن - موقع إسلامي حديث",
+  title: {
+    default: "بوابة القرآن - موقع إسلامي حديث",
+    template: "%s | بوابة القرآن"
+  },
   description: "منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.",
+  keywords: ["القرآن الكريم", "تلاوات", "شيوخ", "أدعية", "مصحف", "إسلام"],
+  authors: [{ name: "بوابة القرآن" }],
+  creator: "بوابة القرآن",
+  publisher: "بوابة القرآن",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "ar_AR",
+    url: "https://quran.com",
+    title: "بوابة القرآن - موقع إسلامي حديث",
+    description: "منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.",
+    siteName: "بوابة القرآن",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "بوابة القرآن - موقع إسلامي حديث",
+    description: "منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    google: 'google-site-verification-code',
+  },
 }
 
 export default function RootLayout({

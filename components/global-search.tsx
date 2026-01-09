@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, memo } from "react"
 import { useRouter } from "next/navigation"
 import { Search, Loader2, User, BookOpen, ArrowRight } from "lucide-react"
 import {
@@ -31,7 +31,7 @@ interface SearchResult {
     verse_id: number
 }
 
-export function GlobalSearch() {
+function GlobalSearchComponent() {
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState("")
     const [reciters, setReciters] = useState<Reciter[]>([])
@@ -208,3 +208,5 @@ export function GlobalSearch() {
         </>
     )
 }
+
+export const GlobalSearch = memo(GlobalSearchComponent)

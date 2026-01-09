@@ -3,10 +3,10 @@
 import { useAudioPlayer } from './audio-player-provider'
 import { Button } from './ui/button'
 import { Play, Pause, SkipBack, SkipForward, Volume2, X, Minimize2, Maximize2 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export function PersistentAudioPlayer() {
+function PersistentAudioPlayerComponent() {
     const {
         isPlaying,
         currentTrack,
@@ -168,3 +168,5 @@ export function PersistentAudioPlayer() {
         </AnimatePresence>
     )
 }
+
+export const PersistentAudioPlayer = memo(PersistentAudioPlayerComponent)
