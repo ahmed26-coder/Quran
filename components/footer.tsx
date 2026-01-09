@@ -89,59 +89,24 @@ export function Footer() {
                                     الأدعية
                                 </Link>
                             </li>
-                            <li>
-                                <Link href="/blog" className="text-muted-foreground hover:text-foreground">
-                                    المدونة
-                                </Link>
-                            </li>
                         </ul>
                     </div>
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium">الموارد</h3>
                         <ul className="space-y-2 text-sm">
                             <li>
-                                <Link href="/learn" className="text-muted-foreground hover:text-foreground">
-                                    تعلم التجويد
-                                </Link>
-                            </li>
-                            <li>
                                 <Link href="/prayer-times" className="text-muted-foreground hover:text-foreground">
                                     مواقيت الصلاة
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/glossary" className="text-muted-foreground hover:text-foreground">
-                                    المصطلحات الإسلامية
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/faq" className="text-muted-foreground hover:text-foreground">
+                                <Link href="/contact#faq" className="text-muted-foreground hover:text-foreground">
                                     الأسئلة الشائعة
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium">الشركة</h3>
-                        <ul className="space-y-2 text-sm">
-                            <li>
-                                <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                                    من نحن
                                 </Link>
                             </li>
                             <li>
                                 <Link href="/contact" className="text-muted-foreground hover:text-foreground">
                                     اتصل بنا
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
-                                    سياسة الخصوصية
-                                </Link>
-                            </li>
-                            <li>
-                                <Link href="/terms" className="text-muted-foreground hover:text-foreground">
-                                    شروط الخدمة
                                 </Link>
                             </li>
                         </ul>

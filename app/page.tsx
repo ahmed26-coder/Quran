@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Users, Heart, ChevronLeft, Moon, Clock } from "lucide-react"
+import { BookOpen, Users, Heart, ChevronLeft, Moon, Clock, Handshake, Lightbulb, Award, Bookmark, BookMarked, Globe } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { motion, Variants } from "framer-motion"
 
@@ -70,7 +70,7 @@ export default function Home() {
                 className="relative h-[300px] lg:h-[400px] xl:h-[500px] overflow-hidden rounded-xl"
               >
                 <Image
-                  src="/images/mosque_hero.png"
+                  src="/quran.jpg"
                   width={600}
                   height={500}
                   alt="مصحف وروحانيات"
@@ -204,21 +204,22 @@ export default function Home() {
               className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3"
             >
               {[
-                { id: 1, name: "الشيخ عبد الباسط عبد الصمد" },
-                { id: 2, name: "الشيخ عبد الرحمن السديس" },
-                { id: 3, name: "الشيخ مشاري راشد العفاسي" },
+                { id: 106, name: "الشيخ محمد الطبلاوي" },
+                { id: 112, name: "الشيخ محمد صديق المنشاوي" },
+                { id: 118, name: "الشيخ محمود خليل الحصري" },
               ].map((sheikh) => (
                 <motion.div key={sheikh.id} variants={itemVariants}>
                   <Link href={`/sheikhs/${sheikh.id}`} className="group">
                     <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm transition-all hover:shadow-md hover:border-emerald-200">
-                      <div className="relative h-40 w-40 mx-auto overflow-hidden rounded-full border-4 border-emerald-50 shadow-lg group-hover:border-emerald-200 transition-colors">
-                        <Image
-                          src={`/images/reciter_${(sheikh.id % 2) + 1}.png`}
-                          width={160}
-                          height={160}
-                          alt={sheikh.name}
-                          className="object-cover transition-transform group-hover:scale-110"
-                        />
+                      <div className="relative h-48 w-48 mx-auto flex items-center justify-center rounded-full border-4 border-emerald-50 shadow-xl group-hover:border-emerald-200 transition-all duration-300 bg-emerald-100 text-4xl font-bold text-emerald-700">
+                        {sheikh.name
+                          ? sheikh.name
+                            .split(" ")
+                            .map((word: any[]) => word[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase()
+                          : "قارئ"}
                       </div>
                       <div className="space-y-2 text-center">
                         <h3 className="text-xl font-bold group-hover:text-emerald-600">{sheikh.name}</h3>
@@ -299,6 +300,144 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="w-full py-12 bg-emerald-50 dark:bg-emerald-950/10">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">قيمنا ومبادئنا</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  المبادئ التي نلتزم بها في عملنا وخدمتنا للمجتمع الإسلامي
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl gap-8 py-12 md:grid-cols-2">
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">
+                    <Award className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">الأصالة والموثوقية</h3>
+                    <p className="text-muted-foreground">
+                      نلتزم بتقديم محتوى إسلامي أصيل وموثوق به، مستمد من مصادر معتمدة ومراجع موثوقة.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">
+                    <Users className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">الشمولية والتنوع</h3>
+                    <p className="text-muted-foreground">
+                      نسعى لخدمة جميع المسلمين بمختلف خلفياتهم وثقافاتهم ولغاتهم، ونحترم التنوع في الآراء والمذاهب
+                      الإسلامية.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">
+                    <Lightbulb className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">الابتكار والتطوير</h3>
+                    <p className="text-muted-foreground">
+                      نؤمن بأهمية الابتكار والتطوير المستمر لتقديم أفضل تجربة ممكنة للمستخدمين، مع الحفاظ على الأصالة
+                      الإسلامية.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">
+                    <Handshake className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">التعاون والمشاركة</h3>
+                    <p className="text-muted-foreground">
+                      نشجع التعاون والمشاركة المجتمعية، ونرحب بمساهمات المستخدمين واقتراحاتهم لتحسين المنصة.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="w-full py-12 md:py-24">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">خدماتنا</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  نقدم مجموعة متنوعة من الخدمات لمساعدة المسلمين في رحلتهم الروحانية
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+                <BookOpen className="h-12 w-12 text-emerald-600" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">القرآن الكريم</h3>
+                  <p className="text-muted-foreground">
+                    قراءة القرآن الكريم مع التفسير والترجمة، والاستماع إلى تلاوات بأصوات مختلفة من قراء مشهورين.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+                <Users className="h-12 w-12 text-emerald-600" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">الشيوخ والقراء</h3>
+                  <p className="text-muted-foreground">
+                    التعرف على الشيوخ والقراء المشهورين، والاستماع إلى تلاواتهم ومحاضراتهم، ومعرفة سيرهم الذاتية.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+                <Heart className="h-12 w-12 text-emerald-600" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">الأدعية والأذكار</h3>
+                  <p className="text-muted-foreground">
+                    مجموعة من الأدعية والأذكار الصحيحة لمختلف المناسبات والأوقات، مع النص العربي والترجمة والنطق.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+                <Globe className="h-12 w-12 text-emerald-600" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">مواقيت الصلاة</h3>
+                  <p className="text-muted-foreground">
+                    معرفة مواقيت الصلاة حسب موقعك الجغرافي، مع إمكانية ضبط الإشعارات للتذكير بأوقات الصلاة.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+                <BookMarked className="h-12 w-12 text-emerald-600" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">المدونة الإسلامية</h3>
+                  <p className="text-muted-foreground">
+                    مقالات ومواضيع إسلامية متنوعة تتناول مختلف جوانب الدين الإسلامي، كتبها علماء ومختصون.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-4 rounded-lg border bg-background p-6 shadow-sm">
+                <Bookmark className="h-12 w-12 text-emerald-600" />
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold">الأسئلة الشائعة</h3>
+                  <p className="text-muted-foreground">
+                    إجابات على الأسئلة الشائعة حول الإسلام والعبادات والمعاملات، مدعومة بالأدلة من القرآن والسنة.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="w-full py-12 md:py-24 lg:py-32 bg-emerald-50 dark:bg-emerald-950/10 overflow-hidden">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
@@ -329,7 +468,7 @@ export default function Home() {
               >
                 <div className="relative h-[300px] w-full overflow-hidden rounded-xl shadow-xl">
                   <Image
-                    src="/images/community_discussion.png"
+                    src="/home.jpg"
                     width={500}
                     height={300}
                     alt="المجتمع الإسلامي"

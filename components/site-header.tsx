@@ -32,9 +32,6 @@ export function SiteHeader() {
           <Link href="/prayer-times" className="text-sm font-medium transition-colors hover:text-emerald-600">
             مواقيت الصلاة
           </Link>
-          <Link href="/about" className="text-sm font-medium transition-colors hover:text-emerald-600">
-            عن الموقع
-          </Link>
           <Link href="/contact" className="text-sm font-medium transition-colors hover:text-emerald-600">
             اتصل بنا
           </Link>

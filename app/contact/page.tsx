@@ -66,7 +66,7 @@ export default function ContactPage() {
 
                 <div className="relative h-[300px] w-full overflow-hidden rounded-xl">
                   <Image
-                    src="/placeholder.svg?height=300&width=600&text=خريطة+الموقع"
+                    src="/contact.jpg"
                     width={600}
                     height={300}
                     alt="خريطة الموقع"
@@ -74,7 +74,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-2">
                   <h3 className="text-xl font-bold">ساعات العمل</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -143,7 +143,7 @@ export default function ContactPage() {
           </div>
         </section>
 
-        <section className="w-full py-12 bg-emerald-50 dark:bg-emerald-950/10">
+        <section id="faq" className="w-full py-12 bg-emerald-50 dark:bg-emerald-950/10">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">

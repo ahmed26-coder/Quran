@@ -146,6 +146,74 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [downloadingSurahs, setDownloadingSurahs] = useState<{ [key: number]: number }>({})
+  const [abortControllers, setAbortControllers] = useState<{ [key: number]: AbortController }>({})
+  const [bulkDownloadStatus, setBulkDownloadStatus] = useState<{ total: number, current: number, progress: number, isCancelled: boolean } | null>(null)
+
+  const CircularProgress = ({ progress, size = 100, onCancel }: { progress: number, size?: number, onCancel?: () => void }) => {
+    const strokeWidth = size * 0.05
+    const radius = (size - strokeWidth) / 2
+    const circumference = 2 * Math.PI * radius
+    const offset = circumference - (progress / 100) * circumference
+    const [isHovered, setIsHovered] = useState(false)
+
+    return (
+      <div
+        className="relative flex items-center justify-center shrink-0 group"
+        style={{ width: size, height: size }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          className="transform -rotate-90 pointer-events-none"
+        >
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            className="text-emerald-100/30 dark:text-emerald-950/20"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            className="text-emerald-500 dark:text-emerald-400 transition-all duration-300 ease-in-out"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          {isHovered && onCancel ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onCancel()
+              }}
+              className="flex items-center justify-center w-full h-full rounded-full bg-destructive text-white hover:bg-destructive/90 transition-all z-30 pointer-events-auto shadow-sm scale-110 active:scale-95"
+            >
+              <X className={`${size < 40 ? 'h-3 w-3' : 'h-5 w-5'}`} />
+            </button>
+          ) : (
+            <span className={`${size < 40 ? 'text-[8px]' : 'text-[10px]'} font-bold text-emerald-700 dark:text-emerald-200 tabular-nums pointer-events-none`}>
+              {Math.round(progress)}%
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   useEffect(() => {
     const fetchSheikhData = async () => {
@@ -163,7 +231,7 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
           }
         }
       } catch (error) {
-        console.error("[v0] Error fetching sheikh data:", error)
+        console.error(" Error fetching sheikh data:", error)
       } finally {
         setLoading(false)
       }
@@ -254,14 +322,90 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
-  const handleDownloadSurah = (surahId: number, name?: string) => {
+  const handleDownloadSurah = async (surahId: number, name?: string) => {
     if (!selectedRecitation) return
     const surahNum = String(surahId).padStart(3, "0")
     const audioUrl = `${selectedRecitation.server}${surahNum}.mp3`
-    const link = document.createElement("a")
-    link.href = audioUrl
-    link.download = `${sheikh?.name} - ${name || 'سورة'}.mp3`
-    link.click()
+
+    const controller = new AbortController()
+    setAbortControllers(prev => ({ ...prev, [surahId]: controller }))
+
+    try {
+      setDownloadingSurahs(prev => ({ ...prev, [surahId]: 0 }))
+
+      const response = await fetch(audioUrl, { signal: controller.signal })
+      if (!response.ok) throw new Error('فشل التحميل')
+
+      const contentLength = response.headers.get('content-length')
+      const total = contentLength ? parseInt(contentLength, 10) : 0
+
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error('فشل قراءة البيانات')
+
+      let receivedLength = 0
+      const chunks = []
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        chunks.push(value)
+        receivedLength += value.length
+
+        if (total) {
+          const progress = (receivedLength / total) * 100
+          setDownloadingSurahs(prev => ({ ...prev, [surahId]: progress }))
+        }
+      }
+
+      const blob = new Blob(chunks)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `${sheikh?.name} - ${name || 'سورة'}.mp3`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log("Download cancelled for surah:", surahId)
+      } else {
+        console.error("Download error:", error)
+        toast({
+          title: "خطأ في التحميل",
+          description: "حدث خطأ أثناء محاولة تحميل السورة",
+          variant: "destructive"
+        })
+      }
+    } finally {
+      setDownloadingSurahs(prev => {
+        const newState = { ...prev }
+        delete newState[surahId]
+        return newState
+      })
+      setAbortControllers(prev => {
+        const newState = { ...prev }
+        delete newState[surahId]
+        return newState
+      })
+    }
+  }
+
+  const handleCancelDownload = (surahId: number) => {
+    if (abortControllers[surahId]) {
+      abortControllers[surahId].abort()
+      setDownloadingSurahs(prev => {
+        const newState = { ...prev }
+        delete newState[surahId]
+        return newState
+      })
+      setAbortControllers(prev => {
+        const newState = { ...prev }
+        delete newState[surahId]
+        return newState
+      })
+    }
   }
 
   const formatTime = (time: number) => {
@@ -273,15 +417,29 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
   const handleDownloadAllRecitations = async () => {
     if (!selectedRecitation || surahList.length === 0) return
 
-    // يمكن إضافة مكتبة مثل jszip لتحميل عدة ملفات
-    // للآن، سنعرض رسالة للمستخدم
-    alert(`سيتم تحميل ${surahList.length} سورة. هذا قد يستغرق بعض الوقت.`)
+    toast({
+      title: "بدأ التحميل",
+      description: `سيتم تحميل ${surahList.length} سورة في الخلفية`,
+    })
 
-    for (const surah of surahList) {
-      setTimeout(() => {
-        handleDownloadSurah(surah.id, surah.name)
-      }, 500)
+    setBulkDownloadStatus({ total: surahList.length, current: 0, progress: 0, isCancelled: false })
+    const statusRef = { isCancelled: false }
+      ; (document as any)._bulkDownloadCancel = () => { statusRef.isCancelled = true }
+
+    // Sequential download to avoid browser limits and heavy concurrent memory usage
+    for (let i = 0; i < surahList.length; i++) {
+      if (statusRef.isCancelled) break
+
+      const surah = surahList[i]
+      setBulkDownloadStatus(prev => {
+        if (prev?.isCancelled) return prev
+        return { ...prev!, current: i + 1, progress: ((i + 1) / surahList.length) * 100 }
+      })
+      await handleDownloadSurah(surah.id, surah.name)
     }
+
+    setBulkDownloadStatus(null)
+    delete (document as any)._bulkDownloadCancel
   }
 
   if (loading) {
@@ -301,11 +459,11 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 bg-gradient-to-b from-emerald-50 to-white dark:from-emerald-950/30 dark:to-background">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_2fr] lg:gap-12">
+            <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
               <div className="flex flex-col items-center space-y-4">
                 <div className="relative h-64 w-64 overflow-hidden rounded-full border-8 border-white shadow-2xl">
                   <Image
-                    src={`/images/reciter_${(id ? parseInt(id) % 2 : 0) + 1}.png`}
+                    src="/id.jpg"
                     width={256}
                     height={256}
                     alt={sheikh?.name || "قارئ"}
@@ -361,27 +519,53 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                       <div className="bg-muted/50 p-4 border-t">
                         <div className="flex justify-between items-center mb-4">
                           <h4 className="font-semibold text-right">السور المتاحة ({surahList.length})</h4>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              alert(`سيتم تحميل ${surahList.length} سورة. هذا قد يستغرق بعض الوقت.`)
-                              for (const surah of surahList) {
-                                setTimeout(() => {
-                                  const surahNum = String(surah.id).padStart(3, "0")
-                                  const audioUrl = `${selectedRecitation.server}${surahNum}.mp3`
-                                  const link = document.createElement("a")
-                                  link.href = audioUrl
-                                  link.download = `${sheikh.name} - ${surah.name}.mp3`
-                                  link.click()
-                                }, 500)
-                              }
-                            }}
-                            className="flex items-center gap-2"
-                          >
-                            <Download className="h-4 w-4" />
-                            تحميل الكل
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleDownloadAllRecitations}
+                              className="flex items-center gap-2 relative overflow-hidden h-10"
+                              disabled={bulkDownloadStatus !== null}
+                            >
+                              {bulkDownloadStatus ? (
+                                <>
+                                  <div
+                                    className="absolute inset-0 bg-emerald-500/10 transition-all duration-300"
+                                    style={{ width: `${bulkDownloadStatus.progress}%` }}
+                                  />
+                                  <CircularProgress
+                                    progress={bulkDownloadStatus.progress}
+                                    size={24}
+                                  />
+                                  <span className="relative z-10 hidden sm:inline">جاري التحميل ({bulkDownloadStatus.current}/{bulkDownloadStatus.total})</span>
+                                  <span className="relative z-10 sm:hidden">{bulkDownloadStatus.current}/{bulkDownloadStatus.total}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="h-4 w-4" />
+                                  <span>تحميل الكل</span>
+                                </>
+                              )}
+                            </Button>
+                            {bulkDownloadStatus && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="h-10 px-3"
+                                onClick={() => {
+                                  setBulkDownloadStatus(prev => prev ? { ...prev, isCancelled: true } : null)
+                                  if ((document as any)._bulkDownloadCancel) {
+                                    (document as any)._bulkDownloadCancel()
+                                  }
+                                  // Cancel active individual downloads
+                                  Object.values(abortControllers).forEach(c => c.abort())
+                                }}
+                              >
+                                <X className="h-4 w-4 ml-1" />
+                                إلغاء الكل
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 max-h-96 overflow-y-auto">
                           {surahList.map((surah: Surah) => (
@@ -390,12 +574,15 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                               className="flex items-center justify-between bg-background p-3 rounded border hover:border-emerald-500 transition-colors"
                             >
                               <span className="text-sm font-medium">{surah.name}</span>
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 items-center justify-center">
                                 <Button
                                   size="sm"
                                   variant={currentAudio?.surahId === surah.id ? "default" : "outline"}
                                   onClick={() => handlePlaySurah(surah)}
-                                  className="flex items-center gap-2 h-8 px-3"
+                                  className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentAudio?.surahId === surah.id
+                                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                    }`}
                                 >
                                   {currentAudio?.surahId === surah.id && isPlaying ? (
                                     <Pause className="h-4 w-4" />
@@ -404,14 +591,22 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                                   )}
                                   <span>{currentAudio?.surahId === surah.id && isPlaying ? "إيقاف" : "تشغيل"}</span>
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDownloadSurah(surah.id, surah.name)}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
+                                {downloadingSurahs[surah.id] !== undefined ? (
+                                  <CircularProgress
+                                    progress={downloadingSurahs[surah.id]}
+                                    size={36}
+                                    onCancel={() => handleCancelDownload(surah.id)}
+                                  />
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleDownloadSurah(surah.id, surah.name)}
+                                    className="h-12 w-12 p-0"
+                                  >
+                                    <Download className="h-6 w-6" />
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -496,14 +691,22 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
 
               {/* Additional Actions */}
               <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => {
-                  const link = document.createElement("a")
-                  link.href = currentAudio.url
-                  link.download = `${sheikh.name} - ${currentAudio.surahName}.mp3`
-                  link.click()
-                }}>
-                  <Download className="h-5 w-5" />
-                </Button>
+                {downloadingSurahs[currentAudio.surahId] !== undefined ? (
+                  <CircularProgress
+                    progress={downloadingSurahs[currentAudio.surahId]}
+                    size={32}
+                    onCancel={() => handleCancelDownload(currentAudio.surahId)}
+                  />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-10 w-10 p-0"
+                    onClick={() => handleDownloadSurah(currentAudio.surahId, currentAudio.surahName)}
+                  >
+                    <Download className="h-5 w-5 text-emerald-600" />
+                  </Button>
+                )}
                 <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setCurrentAudio(null)}>
                   <X className="h-5 w-5" />
                 </Button>

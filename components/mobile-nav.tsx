@@ -56,13 +56,6 @@ export function MobileNav() {
               الأدعية
             </Link>
             <Link
-              href="/about"
-              className="text-base font-medium transition-colors hover:text-emerald-600"
-              onClick={() => setOpen(false)}
-            >
-              عن الموقع
-            </Link>
-            <Link
               href="/contact"
               className="text-base font-medium transition-colors hover:text-emerald-600"
               onClick={() => setOpen(false)}
