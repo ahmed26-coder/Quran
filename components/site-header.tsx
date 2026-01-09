@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Moon, Search } from "lucide-react"
 import { MobileNav } from "@/components/mobile-nav"
 import { HijriDate } from "@/components/hijri-date"
+import { GlobalSearch } from "@/components/global-search"
 
 export function SiteHeader() {
   return (
@@ -37,10 +38,7 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-emerald-600">
-            <Search className="h-5 w-5" />
-            <span className="sr-only">بحث</span>
-          </Button>
+          <GlobalSearch />
           <ThemeToggle />
           <Button variant="outline" className="hidden md:flex bg-transparent">
             تسجيل الدخول

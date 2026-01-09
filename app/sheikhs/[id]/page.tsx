@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, use } from "react"
 import { Slider } from "@/components/ui/slider"
 import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { useAudioPlayer } from "@/components/audio-player-provider"
 
 interface Surah {
   id: number
@@ -140,12 +141,9 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
     { id: 114, name: "الناس" },
   ]
 
-  // Audio Player State
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentAudio, setCurrentAudio] = useState<{ url: string, surahName: string, surahId: number } | null>(null)
-  const [progress, setProgress] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  // Use global audio player
+  const { play, isPlaying, currentTrack } = useAudioPlayer()
+
   const [downloadingSurahs, setDownloadingSurahs] = useState<{ [key: number]: number }>({})
   const [abortControllers, setAbortControllers] = useState<{ [key: number]: AbortController }>({})
   const [bulkDownloadStatus, setBulkDownloadStatus] = useState<{ total: number, current: number, progress: number, isCancelled: boolean } | null>(null)
@@ -276,50 +274,33 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
   }
 
   const handlePlaySurah = (surah: Surah) => {
-    if (!selectedRecitation) return
+    if (!selectedRecitation || !sheikh) return
+
     const surahNum = String(surah.id).padStart(3, "0")
     const audioUrl = `${selectedRecitation.server}${surahNum}.mp3`
 
-    if (currentAudio?.url === audioUrl) {
-      if (isPlaying) {
-        audioRef.current?.pause()
-      } else {
-        audioRef.current?.play()
+    // Create playlist from all available surahs
+    const playlist = surahList.map(s => {
+      const num = String(s.id).padStart(3, "0")
+      return {
+        url: `${selectedRecitation.server}${num}.mp3`,
+        surahName: s.name,
+        surahNumber: s.id,
+        reciterName: sheikh.name,
+        reciterId: parseInt(id)
       }
-      return
+    })
+
+    // Find the track to play
+    const track = {
+      url: audioUrl,
+      surahName: surah.name,
+      surahNumber: surah.id,
+      reciterName: sheikh.name,
+      reciterId: parseInt(id)
     }
 
-    setCurrentAudio({ url: audioUrl, surahName: surah.name, surahId: surah.id })
-    setIsPlaying(true)
-    if (audioRef.current) {
-      audioRef.current.src = audioUrl
-      audioRef.current.play()
-    }
-  }
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setProgress(audioRef.current.currentTime)
-    }
-  }
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration)
-    }
-  }
-
-  const handleSeek = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0]
-      setProgress(value[0])
-    }
-  }
-
-  const skipTime = (amount: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = Math.max(0, Math.min(duration, audioRef.current.currentTime + amount))
-    }
+    play(track, playlist)
   }
 
   const handleDownloadSurah = async (surahId: number, name?: string) => {
@@ -577,19 +558,19 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                               <div className="flex gap-2 items-center justify-center">
                                 <Button
                                   size="sm"
-                                  variant={currentAudio?.surahId === surah.id ? "default" : "outline"}
+                                  variant={currentTrack?.surahNumber === surah.id ? "default" : "outline"}
                                   onClick={() => handlePlaySurah(surah)}
-                                  className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentAudio?.surahId === surah.id
+                                  className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentTrack?.surahNumber === surah.id
                                     ? "bg-emerald-600 text-white hover:bg-emerald-700"
                                     : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                     }`}
                                 >
-                                  {currentAudio?.surahId === surah.id && isPlaying ? (
+                                  {currentTrack?.surahNumber === surah.id && isPlaying ? (
                                     <Pause className="h-4 w-4" />
                                   ) : (
                                     <Play className="h-4 w-4" />
                                   )}
-                                  <span>{currentAudio?.surahId === surah.id && isPlaying ? "إيقاف" : "تشغيل"}</span>
+                                  <span>{currentTrack?.surahNumber === surah.id && isPlaying ? "إيقاف" : "تشغيل"}</span>
                                 </Button>
                                 {downloadingSurahs[surah.id] !== undefined ? (
                                   <CircularProgress
@@ -622,99 +603,6 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
           </div>
         </section>
       </main>
-
-      {/* Hidden Audio Element */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
-      />
-
-      {/* Persistent Audio Player Bar */}
-      <AnimatePresence>
-        {currentAudio && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-emerald-100 dark:border-emerald-900/30 p-4 shadow-[0_-8px_30px_rgb(0,0,0,0.12)]"
-          >
-            <div className="container mx-auto flex flex-col md:flex-row items-center gap-4 md:gap-8">
-              {/* Surah Info */}
-              <div className="flex items-center gap-4 w-full md:w-auto min-w-[150px]">
-                <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                  <Volume2 className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div className="overflow-hidden">
-                  <h4 className="font-bold text-sm truncate">{currentAudio.surahName}</h4>
-                  <p className="text-xs text-muted-foreground truncate">{sheikh?.name}</p>
-                </div>
-              </div>
-
-              {/* Controls & Progress */}
-              <div className="flex flex-col flex-1 w-full gap-2">
-                <div className="flex items-center justify-center gap-4">
-                  <Button variant="ghost" size="icon" onClick={() => skipTime(-10)} className="rounded-full">
-                    <RotateCcw className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    onClick={() => {
-                      if (isPlaying) audioRef.current?.pause()
-                      else audioRef.current?.play()
-                    }}
-                    className="h-12 w-12 rounded-full bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 dark:shadow-none"
-                  >
-                    {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 mr-1" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => skipTime(10)} className="rounded-full">
-                    <RotateCw className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] tabular-nums text-muted-foreground w-8 text-right">{formatTime(progress)}</span>
-                  <Slider
-                    value={[progress]}
-                    max={duration || 100}
-                    step={0.1}
-                    onValueChange={handleSeek}
-                    className="flex-1"
-                  />
-                  <span className="text-[10px] tabular-nums text-muted-foreground w-8">{formatTime(duration)}</span>
-                </div>
-              </div>
-
-              {/* Additional Actions */}
-              <div className="hidden md:flex items-center gap-2">
-                {downloadingSurahs[currentAudio.surahId] !== undefined ? (
-                  <CircularProgress
-                    progress={downloadingSurahs[currentAudio.surahId]}
-                    size={32}
-                    onCancel={() => handleCancelDownload(currentAudio.surahId)}
-                  />
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full h-10 w-10 p-0"
-                    onClick={() => handleDownloadSurah(currentAudio.surahId, currentAudio.surahName)}
-                  >
-                    <Download className="h-5 w-5 text-emerald-600" />
-                  </Button>
-                )}
-                <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setCurrentAudio(null)}>
-                  <X className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

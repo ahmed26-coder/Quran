@@ -27,7 +27,8 @@ async function getSurahs() {
   }
 }
 
-export default async function QuranPage() {
+export default async function QuranPage({ searchParams }: { searchParams: Promise<{ surah?: string, ayah?: string }> }) {
+  const params = await searchParams
   const data = await getSurahs()
   const surahs: Surah[] = data?.data || []
   const hasError = !data
@@ -49,11 +50,15 @@ export default async function QuranPage() {
           <div className="container px-4 md:px-6">
             {hasError ? (
               <div className="bg-red-50 dark:bg-red-950/20 p-8 rounded-xl border border-red-100 dark:border-red-900/30 text-center space-y-4">
-                <p className="text-red-600 font-medium text-lg">عذراً، حدث خطأ أثناء تحميل بيانات السور.</p>
+                <p className="text-red-600 font-medium text-lg">عذراً، حدث خطأ أثناء تحميل بيانات السورة.</p>
                 <p className="text-muted-foreground text-sm">يرجى التحقق من اتصال الإنترنت أو المحاولة مرة أخرى لاحقاً.</p>
               </div>
             ) : (
-              <QuranBrowser surahs={surahs} />
+              <QuranBrowser
+                surahs={surahs}
+                initialSurah={params.surah ? parseInt(params.surah) : undefined}
+                initialAyah={params.ayah ? parseInt(params.ayah) : undefined}
+              />
             )}
           </div>
         </section>

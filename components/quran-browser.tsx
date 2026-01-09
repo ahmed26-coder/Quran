@@ -41,6 +41,8 @@ interface Ayah {
 
 interface QuranBrowserProps {
   surahs: Surah[]
+  initialSurah?: number
+  initialAyah?: number
 }
 
 const JUZS = Array.from({ length: 30 }, (_, i) => ({
@@ -49,7 +51,7 @@ const JUZS = Array.from({ length: 30 }, (_, i) => ({
   description: `الجزء ${i + 1} من القرآن الكريم`
 }))
 
-export default function QuranBrowser({ surahs }: QuranBrowserProps) {
+export default function QuranBrowser({ surahs, initialSurah, initialAyah }: QuranBrowserProps) {
   // Main State
   const [readerMode, setReaderMode] = useState<"text" | "image">("image")
 
@@ -223,35 +225,67 @@ export default function QuranBrowser({ surahs }: QuranBrowserProps) {
 
   // --- Effects ---
 
-  // Initialization: Load from localStorage or defaults
+  // Initialization: Load from props or localStorage or defaults
   useEffect(() => {
     const saved = localStorage.getItem("quran-state")
-    let initialSurah = 1
-    let initialPage = 1
-    let initialJuz = 1
+    let initialSurahNum = initialSurah || 1
+    let initialPageNum = 1
+    let initialJuzNum = 1
     let initialMode: "text" | "image" = "image"
 
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        initialSurah = parsed.surah || 1
-        initialPage = parsed.page || 1
-        initialJuz = parsed.juz || 1
-        initialMode = parsed.readerMode || "image"
-      } catch (e) {
-        console.error("Failed to parse saved state", e)
+    const initialize = async () => {
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          if (!initialSurah) initialSurahNum = parsed.surah || 1
+          initialPageNum = parsed.page || 1
+          initialJuzNum = parsed.juz || 1
+          if (!initialAyah) initialMode = parsed.readerMode || "image"
+        } catch (e) {
+          console.error("Failed to parse saved state", e)
+        }
       }
+
+      // If initialAyah is provided, find its page
+      if (initialAyah && initialSurah) {
+        try {
+          const res = await fetch(`https://api.alquran.cloud/v1/ayah/${initialSurah}:${initialAyah}`)
+          const data = await res.json()
+          if (data.code === 200) {
+            initialPageNum = data.data.page
+            initialJuzNum = data.data.juz
+          }
+        } catch (e) {
+          console.error("Failed to fetch initial ayah info", e)
+        }
+      }
+
+      setCurrentSurahNum(initialSurahNum)
+      setCurrentPage(initialPageNum)
+      setCurrentJuz(initialJuzNum)
+      setReaderMode(initialMode)
+
+      await fetchSurahData(initialSurahNum)
+      setIsInitialized(true)
     }
 
-    setCurrentSurahNum(initialSurah)
-    setCurrentPage(initialPage)
-    setCurrentJuz(initialJuz)
-    setReaderMode(initialMode)
+    initialize()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSurah, initialAyah])
 
-    fetchSurahData(initialSurah).then(() => {
-      setIsInitialized(true)
-    })
-  }, [fetchSurahData])
+  // Scroll to Ayah logic
+  useEffect(() => {
+    if (isInitialized && initialAyah && readerMode === "text") {
+      const element = document.getElementById(`ayah-${initialAyah}`)
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" })
+        element.classList.add("bg-emerald-100", "dark:bg-emerald-900/40")
+        setTimeout(() => {
+          element.classList.remove("bg-emerald-100", "dark:bg-emerald-900/40")
+        }, 3000)
+      }
+    }
+  }, [isInitialized, initialAyah, readerMode])
 
   return (
     <div className="w-full space-y-8 min-h-[800px]">
@@ -475,7 +509,11 @@ export default function QuranBrowser({ surahs }: QuranBrowserProps) {
                   {/* Ayahs */}
                   <div className="font-amiri text-3xl md:text-4xl leading-[2.8] text-justify md:text-center text-emerald-950 dark:text-emerald-50" dir="rtl">
                     {surahContent.map((ayah) => (
-                      <span key={ayah.number} className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-2 py-1 transition-all cursor-pointer">
+                      <span
+                        key={ayah.number}
+                        id={`ayah-${ayah.numberInSurah}`}
+                        className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-2 py-1 transition-all cursor-pointer"
+                      >
                         {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
                         <span className="inline-flex items-center justify-center w-10 h-10 mx-2 align-middle text-sm border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold">
                           {ayah.numberInSurah}
@@ -497,32 +535,34 @@ export default function QuranBrowser({ surahs }: QuranBrowserProps) {
                   </div>
 
                   {/* Floating Controls for Image Mode */}
-                  <div className="mt-12 flex items-center gap-6">
+                  <div className="mt-8 sm:mt-12 flex items-center gap-3 sm:gap-6">
                     <Button
                       variant="outline"
                       size="lg"
-                      disabled={currentPage >= 604}
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      className="rounded-2xl border-2 hover:bg-emerald-50 hover:border-emerald-200 h-14 px-8 gap-4 font-bold"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
                     >
-                      <ChevronRight className="h-6 w-6" />
-                      الصفحة التالية
+                      <ChevronRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="hidden sm:inline">الصفحة السابقة</span>
+                      <span className="sm:hidden">السابقة</span>
                     </Button>
 
-                    <div className="text-center px-4">
-                      <p className="text-muted-foreground text-xs uppercase tracking-widest mb-1">الصفحة</p>
-                      <p className="text-2xl font-bold">{currentPage}</p>
+                    <div className="flex flex-col items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-800">
+                      <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium">الصفحة</span>
+                      <span className="text-xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-300">{currentPage}</span>
                     </div>
 
                     <Button
                       variant="outline"
                       size="lg"
-                      disabled={currentPage <= 1}
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      className="rounded-2xl border-2 hover:bg-emerald-50 hover:border-emerald-200 h-14 px-8 gap-4 font-bold"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === 604}
+                      className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
                     >
-                      الصفحة السابقة
-                      <ChevronLeft className="h-6 w-6" />
+                      <span className="hidden sm:inline">الصفحة التالية</span>
+                      <span className="sm:hidden">التالية</span>
+                      <ChevronLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                   </div>
                 </div>

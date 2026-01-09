@@ -1,6 +1,8 @@
 import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AudioPlayerProvider } from "@/components/audio-player-provider"
+import { PersistentAudioPlayer } from "@/components/persistent-audio-player"
 import { Tajawal, Amiri } from "next/font/google"
 import { Footer } from "@/components/footer"
 
@@ -30,8 +32,11 @@ export default function RootLayout({
     <html lang="ar" dir="rtl" suppressHydrationWarning>
       <body className={`${tajawal.variable} ${amiri.variable} font-sans antialiased bg-gray-50 dark:bg-gray-950`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          {children}
-          <Footer />
+          <AudioPlayerProvider>
+            {children}
+            <Footer />
+            <PersistentAudioPlayer />
+          </AudioPlayerProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -471,6 +471,7 @@ export default function Home() {
                     src="/home.jpg"
                     width={500}
                     height={300}
+                    loading="lazy"
                     alt="المجتمع الإسلامي"
                     className="object-cover w-full h-full transition-transform hover:scale-105"
                   />
