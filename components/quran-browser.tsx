@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,6 +17,21 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { fetchAvailableTafseers, fetchTafseerForAyahs, type TafseerSource, type TafseerText } from "@/lib/tafseer-api"
 
 interface Surah {
   number: number
@@ -70,6 +85,15 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<{ type: 'surah' | 'ayah', item: any }[]>([])
   const [isSearching, setIsSearching] = useState(false)
+
+  // Tafseer State
+  const [isTafseerDialogOpen, setIsTafseerDialogOpen] = useState(false)
+  const [isTafseerSheetOpen, setIsTafseerSheetOpen] = useState(false)
+  const [availableTafseers, setAvailableTafseers] = useState<TafseerSource[]>([])
+  const [selectedTafseerId, setSelectedTafseerId] = useState<number | string | null>(null)
+  const [tafseerData, setTafseerData] = useState<TafseerText[]>([])
+  const [tafseerRange, setTafseerRange] = useState<{ surah: string, start: number, end: number } | null>(null)
+  const [isFetchingTafseer, setIsFetchingTafseer] = useState(false)
 
   // Derived
   const activeSurah = useMemo(() => surahs.find(s => s.number === currentSurahNum), [surahs, currentSurahNum])
@@ -223,7 +247,81 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     setSearchQuery("")
   }
 
+  // --- Tafseer Logic ---
+  const handleTafseerButtonClick = () => {
+    setIsTafseerDialogOpen(true)
+  }
+
+  const handleTafseerSelect = async (tafseerId: number | string) => {
+    setSelectedTafseerId(tafseerId)
+    setIsTafseerDialogOpen(false)
+    setIsFetchingTafseer(true)
+    setIsTafseerSheetOpen(true)
+    setTafseerData([])
+
+    try {
+      // Get all ayahs on current page
+      let ayahsToFetch: Array<{ surahNumber: number; ayahNumber: number }> = []
+
+      if (readerMode === "text") {
+        // In text mode, use current surah content
+        ayahsToFetch = surahContent.map(ayah => ({
+          surahNumber: currentSurahNum,
+          ayahNumber: ayah.numberInSurah
+        }))
+      } else {
+        // In image mode, fetch page data to get all ayahs on the page
+        const res = await fetch(`https://api.alquran.cloud/v1/page/${currentPage}`)
+        const data = await res.json()
+        if (data.code === 200) {
+          ayahsToFetch = data.data.ayahs.map((ayah: any) => ({
+            surahNumber: ayah.surah.number,
+            ayahNumber: ayah.numberInSurah
+          }))
+        }
+      }
+
+      if (ayahsToFetch.length > 0) {
+        // Calculate range info
+        const first = ayahsToFetch[0]
+        const last = ayahsToFetch[ayahsToFetch.length - 1]
+
+        // Fetch surah name for the range info (might be different from activeSurah in image mode if page spans surahs)
+        // For simplicity, we use the surah of the first ayah. 
+        // In a perfect world we might handle multi-surah pages better, but this is a good start.
+        const surahName = activeSurah?.number === first.surahNumber ? activeSurah.name :
+          surahs.find(s => s.number === first.surahNumber)?.name || "السورة"
+
+        setTafseerRange({
+          surah: surahName,
+          start: first.ayahNumber,
+          end: last.ayahNumber
+        })
+      }
+
+      const tafseers = await fetchTafseerForAyahs(tafseerId, ayahsToFetch)
+      setTafseerData(tafseers)
+    } catch (error) {
+      console.error("Failed to fetch tafseer:", error)
+    } finally {
+      setIsFetchingTafseer(false)
+    }
+  }
+
   // --- Effects ---
+
+  // Load available tafseers on mount
+  useEffect(() => {
+    const loadTafseers = async () => {
+      try {
+        const tafseers = await fetchAvailableTafseers()
+        setAvailableTafseers(tafseers)
+      } catch (error) {
+        console.error("Failed to load tafseers:", error)
+      }
+    }
+    loadTafseers()
+  }, [])
 
   // Initialization: Load from props or localStorage or defaults
   useEffect(() => {
@@ -464,8 +562,14 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
               <Separator orientation="vertical" className="h-8 hidden sm:block" />
 
-              <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl hidden sm:flex" title="معلومات السورة">
-                <Info className="h-4 w-4" />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 rounded-xl hidden sm:flex"
+                title="عرض التفسير"
+                onClick={handleTafseerButtonClick}
+              >
+                <BookOpen className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -499,7 +603,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
                   {/* Basmala */}
                   {activeSurah?.number !== 1 && activeSurah?.number !== 9 && (
-                    <div className="text-center py-6">
+                    <div className="text-center py-3 md:py-8">
                       <p className="font-amiri text-3xl md:text-4xl text-emerald-800 dark:text-emerald-400">
                         بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
                       </p>
@@ -507,24 +611,26 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                   )}
 
                   {/* Ayahs */}
-                  <div className="font-amiri text-3xl md:text-4xl leading-[2.8] text-justify md:text-center text-emerald-950 dark:text-emerald-50" dir="rtl">
-                    {surahContent.map((ayah) => (
-                      <span
-                        key={ayah.number}
-                        id={`ayah-${ayah.numberInSurah}`}
-                        className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-2 py-1 transition-all cursor-pointer"
-                      >
-                        {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
-                        <span className="inline-flex items-center justify-center w-10 h-10 mx-2 align-middle text-sm border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold">
-                          {ayah.numberInSurah}
+                  <div className="max-h-[70vh] overflow-y-auto custom-scrollbar p-4 md:p-8 rounded-2xl bg-white/50 dark:bg-black/5 border border-emerald-50 dark:border-emerald-900/10 shadow-inner">
+                    <div className="font-amiri text-xl md:text-3xl lg:text-4xl leading-[3.5] md:leading-[3.5] text-justify text-emerald-950 dark:text-emerald-50" dir="rtl">
+                      {surahContent.map((ayah) => (
+                        <span
+                          key={ayah.number}
+                          id={`ayah-${ayah.numberInSurah}`}
+                          className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8"
+                        >
+                          {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
+                          <span className="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 mx-2 align-middle text-sm md:text-base border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold">
+                            {ayah.numberInSurah}
+                          </span>
                         </span>
-                      </span>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (
                 <div className="relative w-full min-h-[800px] flex flex-col items-center bg-[#fffdf5] dark:bg-[#1a1c1e]/10 py-10 px-4">
-                  <div className="relative w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">
+                  <div className="relative bg-[#fffdf5] w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">
                     <Image
                       src={`https://raw.githubusercontent.com/GovarJabbar/Quran-PNG/master/${currentPage.toString().padStart(3, '0')}.png`}
                       alt={`الصفحة رقم ${currentPage}`}
@@ -577,6 +683,92 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
           font-family: var(--font-amiri), serif;
         }
       `}</style>
+
+      {/* Tafseer Selection Dialog */}
+      <Dialog open={isTafseerDialogOpen} onOpenChange={setIsTafseerDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">اختر التفسير</DialogTitle>
+            <DialogDescription className="text-center">
+              اختر مصدر التفسير الذي تريد عرضه للصفحة الحالية
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-4 max-h-[60vh] overflow-y-auto custom-scrollbar px-1">
+            {availableTafseers.length === 0 ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-600 mb-2" />
+                <p className="text-sm text-muted-foreground">جاري تحميل التفاسير...</p>
+              </div>
+            ) : (
+              availableTafseers.map((tafseer) => (
+                <Button
+                  key={tafseer.id}
+                  variant="outline"
+                  className="h-auto py-4 px-6 justify-start text-right hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 hover:border-emerald-300 transition-all"
+                  onClick={() => handleTafseerSelect(tafseer.id)}
+                >
+                  <div className="flex flex-col items-start gap-1 w-full">
+                    <span className="font-bold text-lg">{tafseer.name}</span>
+                    {tafseer.author && (
+                      <span className="text-sm text-muted-foreground">{tafseer.author}</span>
+                    )}
+                  </div>
+                </Button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tafseer Display Sheet */}
+      <Sheet open={isTafseerSheetOpen} onOpenChange={setIsTafseerSheetOpen}>
+        <SheetContent side="left" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="text-2xl font-bold text-center">
+              {availableTafseers.find(t => t.id === selectedTafseerId)?.name || "التفسير"}
+            </SheetTitle>
+            <SheetDescription className="text-center">
+              {tafseerRange ? (
+                <span className="block mt-1 font-amiri text-lg font-normal text-muted-foreground">
+                  {tafseerRange.surah} • من الآية {tafseerRange.start} إلى {tafseerRange.end}
+                </span>
+              ) : (
+                readerMode === "image" ? `الصفحة ${currentPage}` : `سورة ${activeSurah?.name}`
+              )}
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            {isFetchingTafseer ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-emerald-600 mb-4" />
+                <p className="text-emerald-700 font-medium">جاري تحميل التفسير...</p>
+              </div>
+            ) : tafseerData.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">لا يوجد تفسير متاح</p>
+              </div>
+            ) : (
+              tafseerData.map((tafseer, index) => (
+                <Card key={index} className="overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/30">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-emerald-600 text-white px-3 py-1">
+                        الآية {tafseer.ayah_number}
+                      </Badge>
+                    </div>
+                    <div className="prose prose-lg max-w-none">
+                      <p className="font-amiri text-xl leading-relaxed text-justify" dir="rtl">
+                        {tafseer.text}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

@@ -558,19 +558,19 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                               <div className="flex gap-2 items-center justify-center">
                                 <Button
                                   size="sm"
-                                  variant={currentTrack?.surahNumber === surah.id ? "default" : "outline"}
+                                  variant={currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) ? "default" : "outline"}
                                   onClick={() => handlePlaySurah(surah)}
-                                  className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentTrack?.surahNumber === surah.id
+                                  className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id)
                                     ? "bg-emerald-600 text-white hover:bg-emerald-700"
                                     : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                     }`}
                                 >
-                                  {currentTrack?.surahNumber === surah.id && isPlaying ? (
+                                  {currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && isPlaying ? (
                                     <Pause className="h-4 w-4" />
                                   ) : (
                                     <Play className="h-4 w-4" />
                                   )}
-                                  <span>{currentTrack?.surahNumber === surah.id && isPlaying ? "إيقاف" : "تشغيل"}</span>
+                                  <span>{currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && isPlaying ? "إيقاف" : "تشغيل"}</span>
                                 </Button>
                                 {downloadingSurahs[surah.id] !== undefined ? (
                                   <CircularProgress
