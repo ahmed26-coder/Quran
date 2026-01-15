@@ -41,15 +41,32 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "ar_AR",
-    url: "https://quran.com",
     title: "بوابة القرآن - موقع إسلامي حديث",
     description: "منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.",
     siteName: "بوابة القرآن",
+    images: [
+      {
+        url: "/logo.avif",
+        width: 800,
+        height: 600,
+      },
+      {
+        url: "/logo.avif",
+        width: 1200,
+        height: 630,
+      },
+      {
+        url: "/logo.avif",
+        width: 400,
+        height: 400,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "بوابة القرآن - موقع إسلامي حديث",
     description: "منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.",
+    images: ["/logo.avif"],
   },
   robots: {
     index: true,

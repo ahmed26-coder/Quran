@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -94,6 +94,9 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
   const [tafseerData, setTafseerData] = useState<TafseerText[]>([])
   const [tafseerRange, setTafseerRange] = useState<{ surah: string, start: number, end: number } | null>(null)
   const [isFetchingTafseer, setIsFetchingTafseer] = useState(false)
+
+  // Toolbar State
+  const [isToolbarMinimized, setIsToolbarMinimized] = useState(false)
 
   // Derived
   const activeSurah = useMemo(() => surahs.find(s => s.number === currentSurahNum), [surahs, currentSurahNum])
@@ -188,6 +191,12 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
   const toggleReaderMode = (mode: "text" | "image") => {
     setReaderMode(mode)
     saveState(currentSurahNum, currentPage, currentJuz, mode)
+  }
+
+  const toggleToolbar = () => {
+    const newState = !isToolbarMinimized
+    setIsToolbarMinimized(newState)
+    localStorage.setItem("quran-toolbar-minimized", String(newState))
   }
 
   // --- Search Logic ---
@@ -323,13 +332,17 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     loadTafseers()
   }, [])
 
-  // Initialization: Load from props or localStorage or defaults
+  // Initialization: Load from props or localStorage
   useEffect(() => {
     const saved = localStorage.getItem("quran-state")
     let initialSurahNum = initialSurah || 1
     let initialPageNum = 1
     let initialJuzNum = 1
     let initialMode: "text" | "image" = "image"
+
+    // Load minimized state
+    const savedMinimized = localStorage.getItem("quran-toolbar-minimized")
+    if (savedMinimized === "true") setIsToolbarMinimized(true)
 
     const initialize = async () => {
       if (saved) {
@@ -397,182 +410,320 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
           className="space-y-6"
         >
           {/* Professional Reader Toolbar */}
-          <div className="sticky top-16 z-30 bg-background/80 backdrop-blur-xl border-2 border-emerald-100 dark:border-emerald-900/30 p-2 rounded-2xl shadow-lg flex flex-wrap items-center justify-between gap-4">
+          <div className={`sticky top-16 z-30 bg-background/95 backdrop-blur-xl border-2 border-emerald-100 dark:border-emerald-900/30 rounded-2xl shadow-lg transition-all duration-300 ${isToolbarMinimized ? 'p-2 w-fit mx-auto' : 'p-3'}`}>
 
-            <div className="flex items-center gap-2 md:gap-3 flex-wrap flex-1 min-w-0">
-              {/* Animated Search Section */}
-              <div className="relative">
-                <motion.div
-                  initial={false}
-                  animate={{
-                    width: isSearchOpen ? (typeof window !== 'undefined' && window.innerWidth < 640 ? '160px' : '280px') : '40px',
-                    borderColor: isSearchOpen ? 'rgba(52, 211, 153, 0.4)' : 'transparent'
-                  }}
-                  className="flex items-center bg-muted/30 rounded-xl overflow-hidden border-2 transition-colors h-10 px-1"
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsSearchOpen(!isSearchOpen)
-                      if (isSearchOpen) setSearchQuery("")
-                    }}
-                    className="rounded-lg h-8 w-8 shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                  >
-                    {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-                  </Button>
-
-                  {isSearchOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="flex-1"
-                    >
+            {!isToolbarMinimized ? (
+              // MAXIMIZED VIEW
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+                <div className="flex sm:hidden relative w-full transition-all duration-300">
+                  <div className="flex items-center bg-background rounded-xl overflow-hidden border-2 border-emerald-400/40 transition-colors h-10 px-1 w-full ring-2 ring-emerald-500/20">
+                    <div className="rounded-lg h-8 w-8 flex items-center justify-center shrink-0">
+                      <Search className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
                       <Input
-                        autoFocus
-                        placeholder="ابحث عن سورة أو آية..."
-                        className="border-none bg-transparent h-8 focus-visible:ring-0 text-sm p-0 shadow-none placeholder:text-muted-foreground/60"
+                        placeholder="ابحث في القرآن..."
+                        className="border-none bg-transparent h-8 focus-visible:ring-0 text-sm p-0 shadow-none placeholder:text-muted-foreground/60 w-full"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
-                    </motion.div>
-                  )}
-                </motion.div>
+                    </div>
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSearchQuery("")}
+                        className="rounded-lg h-8 w-8 shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
 
-                {/* Search Results Dropdown */}
-                <AnimatePresence>
-                  {isSearchOpen && (searchQuery || isSearching) && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-12 right-0 w-[300px] sm:w-[400px] bg-background border-2 border-emerald-100 dark:border-emerald-900/50 rounded-2xl shadow-2xl overflow-hidden z-50 p-2 space-y-1"
-                    >
-                      {isSearching ? (
-                        <div className="p-4 text-center">
-                          <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600 mb-2" />
-                          <p className="text-sm text-muted-foreground">جاري البحث...</p>
-                        </div>
-                      ) : searchResults.length > 0 ? (
-                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                          {searchResults.map((res, idx) => (
-                            <div
-                              key={idx}
-                              onClick={() => handleSearchResultClick(res)}
-                              className="flex items-center justify-between p-3 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl cursor-pointer group transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className={`p-2 rounded-lg ${res.type === 'surah' ? 'bg-emerald-100/50 text-emerald-700' : 'bg-blue-100/50 text-blue-700'}`}>
-                                  {res.type === 'surah' ? <ArrowRight className="h-4 w-4" /> : <Type className="h-4 w-4" />}
-                                </div>
-                                <div>
-                                  <p className="font-bold text-sm">
-                                    {res.type === 'surah' ? res.item.name : `${res.item.surah.name} (${res.item.numberInSurah})`}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground line-clamp-1 font-amiri">
-                                    {res.type === 'surah' ? `سورة رقم ${res.item.number}` : res.item.text}
-                                  </p>
+                  {/* Search Results Dropdown - Independent of isSearchOpen for mobile */}
+                  <AnimatePresence>
+                    {(searchQuery || isSearching) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute top-12 left-0 right-0 w-full bg-background border-2 border-emerald-100 dark:border-emerald-900/50 rounded-2xl shadow-2xl overflow-hidden z-50 p-2 space-y-1"
+                      >
+                        {isSearching ? (
+                          <div className="p-4 text-center">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600 mb-2" />
+                            <p className="text-sm text-muted-foreground">جاري البحث...</p>
+                          </div>
+                        ) : searchResults.length > 0 ? (
+                          <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                            {searchResults.map((res, idx) => (
+                              <div
+                                key={idx}
+                                onClick={() => handleSearchResultClick(res)}
+                                className="flex items-center justify-between p-3 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl cursor-pointer group transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2 rounded-lg ${res.type === 'surah' ? 'bg-emerald-100/50 text-emerald-700' : 'bg-blue-100/50 text-blue-700'}`}>
+                                    {res.type === 'surah' ? <ArrowRight className="h-4 w-4" /> : <Type className="h-4 w-4" />}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-sm">
+                                      {res.type === 'surah' ? res.item.name : `${res.item.surah.name} (${res.item.numberInSurah})`}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground line-clamp-1 font-amiri">
+                                      {res.type === 'surah' ? `سورة رقم ${res.item.number}` : res.item.text}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                              <Badge variant="outline" className="text-[10px] opacity-50 group-hover:opacity-100">
-                                {res.type === 'surah' ? 'سورة' : 'آية'}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="p-8 text-center text-muted-foreground text-sm">لا توجد نتائج للبحث</p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="p-8 text-center text-muted-foreground text-sm">لا توجد نتائج للبحث</p>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {/* Top Row: Search & Selectors */}
+                <div className="flex items-center gap-2 w-full md:w-auto md:flex-1 min-w-0">
+                  {/* Animated Search Section */}
+                  <div className=" hidden sm:flex relative shrink-0">
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        width: isSearchOpen ? (typeof window !== 'undefined' && window.innerWidth < 640 ? '100%' : '280px') : '40px',
+                        position: isSearchOpen && typeof window !== 'undefined' && window.innerWidth < 640 ? 'absolute' : 'relative',
+                        zIndex: 20,
+                        borderColor: isSearchOpen ? 'rgba(52, 211, 153, 0.4)' : 'transparent'
+                      }}
+                      className={`flex items-center bg-muted/30 rounded-xl overflow-hidden border-2 transition-colors h-10 px-1 ${isSearchOpen && typeof window !== 'undefined' && window.innerWidth < 640 ? 'left-0 right-0 w-full bg-background ring-2 ring-emerald-500/20' : ''}`}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setIsSearchOpen(!isSearchOpen)
+                          if (isSearchOpen) setSearchQuery("")
+                        }}
+                        className="rounded-lg h-8 w-8 shrink-0 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                      >
+                        {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+                      </Button>
+
+                      {isSearchOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className="flex-1 min-w-[200px]"
+                        >
+                          <Input
+                            autoFocus
+                            placeholder="ابحث..."
+                            className="border-none bg-transparent h-8 focus-visible:ring-0 text-sm p-0 shadow-none placeholder:text-muted-foreground/60 w-full"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                          />
+                        </motion.div>
                       )}
                     </motion.div>
-                  )}
-                </AnimatePresence>
+
+                    {/* Search Results Dropdown */}
+                    <AnimatePresence>
+                      {isSearchOpen && (searchQuery || isSearching) && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 10 }}
+                          className="absolute top-12 right-0 w-[300px] sm:w-[400px] bg-background border-2 border-emerald-100 dark:border-emerald-900/50 rounded-2xl shadow-2xl overflow-hidden z-50 p-2 space-y-1"
+                        >
+                          {isSearching ? (
+                            <div className="p-4 text-center">
+                              <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600 mb-2" />
+                              <p className="text-sm text-muted-foreground">جاري البحث...</p>
+                            </div>
+                          ) : searchResults.length > 0 ? (
+                            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                              {searchResults.map((res, idx) => (
+                                <div
+                                  key={idx}
+                                  onClick={() => handleSearchResultClick(res)}
+                                  className="flex items-center justify-between p-3 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl cursor-pointer group transition-colors"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${res.type === 'surah' ? 'bg-emerald-100/50 text-emerald-700' : 'bg-blue-100/50 text-blue-700'}`}>
+                                      {res.type === 'surah' ? <ArrowRight className="h-4 w-4" /> : <Type className="h-4 w-4" />}
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-sm">
+                                        {res.type === 'surah' ? res.item.name : `${res.item.surah.name} (${res.item.numberInSurah})`}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground line-clamp-1 font-amiri">
+                                        {res.type === 'surah' ? `سورة رقم ${res.item.number}` : res.item.text}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="p-8 text-center text-muted-foreground text-sm">لا توجد نتائج للبحث</p>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  <Separator orientation="vertical" className="h-8 hidden md:block shrink-0" />
+
+                  {/* Selectors - Scrollable on mobile */}
+                  <div className="flex-1 flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide mask-fade-md">
+                    {/* Juz Selector */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Select value={currentJuz.toString()} onValueChange={(v) => handleSelectJuz(parseInt(v))}>
+                        <SelectTrigger className="w-[85px] sm:w-[110px] h-10 border-none shadow-none focus:ring-0 font-bold bg-muted/30 rounded-xl px-2">
+                          <SelectValue placeholder="الجزء" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {JUZS.map(j => (
+                            <SelectItem key={j.id} value={j.id.toString()}>
+                              الجزء {j.id}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Separator orientation="vertical" className="h-6 hidden sm:block" />
+
+                    {/* Surah Selector */}
+                    <Select value={currentSurahNum.toString()} onValueChange={(v) => handleSelectSurah(parseInt(v))}>
+                      <SelectTrigger className=" w-fit max-w-40 flex-1 h-10 border-none shadow-none focus:ring-0 font-amiri text-base sm:text-lg font-bold bg-muted/30 rounded-xl px-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="w-fit">
+                        {surahs.map(s => (
+                          <SelectItem key={s.number} value={s.number.toString()} className="font-amiri w-fit text-lg">
+                            {s.number}. {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Separator orientation="vertical" className="h-6 hidden sm:block" />
+
+                    {/* Page Selector */}
+                    <Select value={currentPage.toString()} onValueChange={(v) => handlePageChange(parseInt(v))}>
+                      <SelectTrigger className=" w-[75px] sm:w-[90px] h-10 border-none shadow-none focus:ring-0 bg-muted/30 rounded-xl px-2 shrink-0">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {Array.from({ length: 604 }, (_, i) => i + 1).map(p => (
+                          <SelectItem key={p} value={p.toString()}>ص {p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <Separator className="md:hidden w-full bg-border/40" />
+
+                {/* Bottom Row (Mobile): Toggles & Actions */}
+                <div className="flex items-center justify-between w-full md:w-auto gap-2">
+                  <div className="bg-muted/50 p-1 rounded-xl flex items-center gap-1">
+                    <Button
+                      variant={readerMode === "image" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => toggleReaderMode("image")}
+                      className="h-9 rounded-lg px-3 flex-1 sm:flex-none"
+                    >
+                      <ImageIcon className="h-4 w-4 md:ml-2" />
+                      <span className="hidden md:inline">مصحف</span>
+                    </Button>
+                    <Button
+                      variant={readerMode === "text" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => toggleReaderMode("text")}
+                      className="h-9 rounded-lg px-3 flex-1 sm:flex-none"
+                    >
+                      <Type className="h-4 w-4 md:ml-2" />
+                      <span className="hidden md:inline">نص</span>
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-10 px-3 items-center rounded-xl flex border-emerald-200 dark:border-emerald-800"
+                      title="عرض التفسير"
+                      onClick={handleTafseerButtonClick}
+                    >
+                      <BookOpen className="h-4 w-4 md:ml-2" />
+                      <span className="hidden md:inline">التفسير</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className=" sm:hidden h-10 w-10 rounded-xl p-0 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-muted-foreground"
+                      title="تصغير الشريط"
+                      onClick={toggleToolbar}
+                    >
+                      <Minimize2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-
-              <Separator orientation="vertical" className="h-8 hidden md:block shrink-0" />
-
-              {/* Juz Selector */}
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground mr-2 hidden lg:inline">الجزء</span>
-                <Select value={currentJuz.toString()} onValueChange={(v) => handleSelectJuz(parseInt(v))}>
-                  <SelectTrigger className="w-[110px] h-10 border-none shadow-none focus:ring-0 font-bold bg-muted/30 rounded-xl">
-                    <SelectValue placeholder="الجزء" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {JUZS.map(j => (
-                      <SelectItem key={j.id} value={j.id.toString()}>
-                        الجزء {j.id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Separator orientation="vertical" className="h-8" />
-
-              {/* Surah Selector */}
-              <Select value={currentSurahNum.toString()} onValueChange={(v) => handleSelectSurah(parseInt(v))}>
-                <SelectTrigger className="w-[180px] h-10 border-none shadow-none focus:ring-0 font-amiri text-lg font-bold bg-muted/30 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-[400px]">
-                  {surahs.map(s => (
-                    <SelectItem key={s.number} value={s.number.toString()} className="font-amiri text-lg">
-                      {s.number}. {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Separator orientation="vertical" className="h-8" />
-
-              {/* Page Selector */}
-              <Select value={currentPage.toString()} onValueChange={(v) => handlePageChange(parseInt(v))}>
-                <SelectTrigger className="w-[90px] h-10 border-none shadow-none focus:ring-0 bg-muted/30 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {Array.from({ length: 604 }, (_, i) => i + 1).map(p => (
-                    <SelectItem key={p} value={p.toString()}>ص {p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="bg-muted/50 p-1 rounded-xl flex items-center gap-1">
+            ) : (
+              // MINIMIZED VIEW
+              <div className="flex items-center gap-3 px-2">
                 <Button
-                  variant={readerMode === "image" ? "default" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  onClick={() => toggleReaderMode("image")}
-                  className="h-8 rounded-lg px-3"
+                  className="h-9 w-9 rounded-xl p-0 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                  title="تكبير الشريط"
+                  onClick={toggleToolbar}
                 >
-                  <ImageIcon className="h-4 w-4 ml-2" />
-                  <span className="hidden sm:inline">عرض المصحف</span>
+                  <Maximize2 className="h-5 w-5 text-emerald-600" />
                 </Button>
-                <Button
-                  variant={readerMode === "text" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => toggleReaderMode("text")}
-                  className="h-8 rounded-lg px-3"
-                >
-                  <Type className="h-4 w-4 ml-2" />
-                  <span className="hidden sm:inline">عرض النص</span>
-                </Button>
+
+                <div className="h-6 w-px bg-border/60" />
+
+                <div className="flex items-center gap-3 text-sm font-medium">
+                  <span className="font-amiri text-lg text-emerald-800 dark:text-emerald-300">
+                    {readerMode === 'image' || activeSurah ? activeSurah?.name : 'القرآن الكريم'}
+                  </span>
+                  <span className="text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-md text-xs">
+                    ص {currentPage}
+                  </span>
+                </div>
+
+                <div className="flex-1" />
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= 604}
+                    className="h-8 w-8 rounded-lg"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1}
+                    className="h-8 w-8 rounded-lg"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-
-              <Separator orientation="vertical" className="h-8 hidden sm:block" />
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-10 w-auto sm:px-4 items-center rounded-xl flex"
-                title="عرض التفسير"
-                onClick={handleTafseerButtonClick}
-              >
-                <BookOpen className="h-4 w-4 sm:ml-2" />
-                <span className="hidden sm:inline">عرض التفسير</span>
-              </Button>
-            </div>
+            )}
           </div>
 
           {/* Reader Content Area */}
