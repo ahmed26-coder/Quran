@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Moon } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
     return (
         <footer className="w-full border-t bg-background">
-            <div className="container flex flex-col gap-6 py-12 md:py-16 lg:flex-row lg:justify-between lg:py-20">
+            <div className="container flex flex-col gap-6 py-12 lg:flex-row lg:justify-between">
                 <div className="flex flex-col gap-6 lg:max-w-sm">
                     <Link href="/" className="flex items-center gap-2">
-                        <Moon className="h-6 w-6 text-emerald-600" />
-                        <span className="text-xl font-bold">بوابة القرآن</span>
+<span className="text-lg font-bold flex items-center gap-2  "><Image src="/logo.jpg" priority alt="Logo" width={32} height={32} className=" rounded-xl" />بوابة القرآن</span>
                     </Link>
                     <p className="text-sm text-muted-foreground">
                         منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.

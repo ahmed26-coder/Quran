@@ -24,6 +24,7 @@ const amiri = Amiri({
 
 
 export const metadata = {
+  metadataBase: new URL("https://quranee.netlify.app/"),
   title: {
     default: "بوابة القرآن - موقع إسلامي حديث",
     template: "%s | بوابة القرآن"
@@ -46,17 +47,17 @@ export const metadata = {
     siteName: "بوابة القرآن",
     images: [
       {
-        url: "/logo.avif",
+        url: "/logo.jpg",
         width: 800,
         height: 600,
       },
       {
-        url: "/logo.avif",
+        url: "/logo.jpg",
         width: 1200,
         height: 630,
       },
       {
-        url: "/logo.avif",
+        url: "/logo.jpg",
         width: 400,
         height: 400,
       },
@@ -66,7 +67,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "بوابة القرآن - موقع إسلامي حديث",
     description: "منصة حديثة لاستكشاف القرآن الكريم والاستماع إلى الشيوخ المشهورين والوصول إلى الأدعية الصحيحة.",
-    images: ["/logo.avif"],
+    images: ["/logo.jpg"],
   },
   robots: {
     index: true,

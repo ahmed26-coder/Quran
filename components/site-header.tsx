@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Moon, Search } from "lucide-react"
+import Image from "next/image"
 import { MobileNav } from "@/components/mobile-nav"
 import { HijriDate } from "@/components/hijri-date"
 import { GlobalSearchLazy } from "@/components/global-search-lazy"
@@ -12,7 +13,7 @@ export function SiteHeader() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex flex-col items-start gap-1">
           <Link href="/" className="flex items-center gap-2">
-            <Moon className="h-6 w-6 text-emerald-600" />
+            <Image src="/logo.jpg" priority alt="Logo" width={32} height={32} className=" rounded-xl" />
             <span className="text-xl font-bold">بوابة القرآن</span>
           </Link>
           <HijriDate />

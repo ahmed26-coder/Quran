@@ -369,7 +369,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="w-full py-12 md:py-24">
+        <section id="features" className="w-full py-12 md:py-24">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -451,12 +451,15 @@ export default function Home() {
                 <div className="space-y-2">
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">انضم إلى مجتمعنا</h2>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    تواصل مع إخوانك المسلمين، وشارك الأفكار، وانمو روحياً معاً.
+                    شارك الأفكار، وانمُ روحيًا معنا، وكن جزءًا من مجتمعٍ يجمع القلوب على طاعة الله، نتشارك فيه العلم، ونتواصى بالحق، ونقوّي إيماننا معًا.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Button className="bg-emerald-600 hover:bg-emerald-700">سجل الآن</Button>
-                  <Button variant="outline">تعرف على المزيد</Button>
+                  <Button variant="outline" asChild>
+                    <Link href="#features">تعرّف على المزيد</Link>
+                  </Button>
+
                 </div>
               </motion.div>
               <motion.div
