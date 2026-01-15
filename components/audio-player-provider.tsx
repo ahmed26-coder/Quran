@@ -39,11 +39,61 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const [duration, setDuration] = useState(0)
     const [volume, setVolume] = useState(1)
 
+    const [isInitialized, setIsInitialized] = useState(false)
+
     const audioRef = useRef<HTMLAudioElement | null>(null)
 
+    // Load state from localStorage on mount
+    useEffect(() => {
+        const loadState = () => {
+            try {
+                const savedState = localStorage.getItem('quran-audio-state')
+                if (savedState) {
+                    const parsed = JSON.parse(savedState)
+                    if (parsed.currentTrack) setCurrentTrack(parsed.currentTrack)
+                    if (parsed.playlist) setPlaylist(parsed.playlist)
+                    if (parsed.currentIndex) setCurrentIndex(parsed.currentIndex)
+                    if (parsed.volume) setVolume(parsed.volume)
+
+                    // Restore position if available
+                    if (parsed.currentTime && parsed.currentTrack) {
+                        setCurrentTime(parsed.currentTime)
+                        // Defer setting audio element time until after it's created or src set
+                        if (audioRef.current) {
+                            audioRef.current.currentTime = parsed.currentTime
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load audio state", e)
+            } finally {
+                setIsInitialized(true)
+            }
+        }
+        loadState()
+    }, [])
+
+    // Sync restored state to audio element once initialized
+    useEffect(() => {
+        if (isInitialized && currentTrack && audioRef.current) {
+            // Only set if not already playing or different source
+            // This handles the page reload case where we have state but audio element is empty
+            if (audioRef.current.src !== currentTrack.url) {
+                audioRef.current.src = currentTrack.url
+                // Set time but DO NOT play
+                if (currentTime > 0) {
+                    audioRef.current.currentTime = currentTime
+                }
+            }
+        }
+    }, [isInitialized, currentTrack]) // We depend on isInitialized to ensure we only do this after local storage load
+
     // Initialize audio element
+    // Initialize audio element and attach event listeners
     useEffect(() => {
         audioRef.current = new Audio()
+
+        // Restore volume if already set from state
         audioRef.current.volume = volume
 
         // Event listeners
@@ -83,7 +133,27 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             audio.removeEventListener('pause', handlePause)
             audio.pause()
         }
-    }, [])
+    }, []) // Run once on mount, but check if we need to sync with restored state better
+
+    // Save state to localStorage whenever relevant props change
+    useEffect(() => {
+        if (!isInitialized) return
+
+        const stateToSave = {
+            currentTrack,
+            playlist,
+            currentIndex,
+            volume,
+            currentTime // We might want to debounce this or save it only on pause/unload for performance, but straightforward for now
+        }
+
+        // Debounce saving time to avoid thrashing localStorage on every timeupdate (approx 4Hz)
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('quran-audio-state', JSON.stringify(stateToSave))
+        }, 1000)
+
+        return () => clearTimeout(timeoutId)
+    }, [currentTrack, playlist, currentIndex, volume, currentTime, isInitialized])
 
     // Update volume
     useEffect(() => {

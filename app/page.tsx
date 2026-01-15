@@ -215,7 +215,7 @@ export default function Home() {
                         {sheikh.name
                           ? sheikh.name
                             .split(" ")
-                            .map((word: any[]) => word[0])
+                            .map((word: string) => word[0])
                             .slice(0, 2)
                             .join("")
                             .toUpperCase()

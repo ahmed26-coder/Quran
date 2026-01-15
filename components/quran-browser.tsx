@@ -564,12 +564,13 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
               <Button
                 variant="outline"
-                size="icon"
-                className="h-10 w-10 rounded-xl hidden sm:flex"
+                size="sm"
+                className="h-10 w-auto sm:px-4 items-center rounded-xl flex"
                 title="عرض التفسير"
                 onClick={handleTafseerButtonClick}
               >
-                <BookOpen className="h-4 w-4" />
+                <BookOpen className="h-4 w-4 sm:ml-2" />
+                <span className="hidden sm:inline">عرض التفسير</span>
               </Button>
             </div>
           </div>
@@ -686,7 +687,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
       {/* Tafseer Selection Dialog */}
       <Dialog open={isTafseerDialogOpen} onOpenChange={setIsTafseerDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95%] px-3 sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center">اختر التفسير</DialogTitle>
             <DialogDescription className="text-center">
@@ -723,8 +724,16 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       {/* Tafseer Display Sheet */}
       <Sheet open={isTafseerSheetOpen} onOpenChange={setIsTafseerSheetOpen}>
         <SheetContent side="left" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-2xl font-bold text-center">
+          <SheetHeader className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 top-0 h-12 w-12 rounded-full"
+              onClick={() => setIsTafseerSheetOpen(false)}
+            >
+              <X className="h-10 w-10" />
+            </Button>
+            <SheetTitle className="text-2xl font-bold text-center pt-4">
               {availableTafseers.find(t => t.id === selectedTafseerId)?.name || "التفسير"}
             </SheetTitle>
             <SheetDescription className="text-center">

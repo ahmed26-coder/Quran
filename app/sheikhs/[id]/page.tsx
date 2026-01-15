@@ -142,7 +142,7 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
   ]
 
   // Use global audio player
-  const { play, isPlaying, currentTrack } = useAudioPlayer()
+  const { play, pause, resume, isPlaying, currentTrack } = useAudioPlayer()
 
   const [downloadingSurahs, setDownloadingSurahs] = useState<{ [key: number]: number }>({})
   const [abortControllers, setAbortControllers] = useState<{ [key: number]: AbortController }>({})
@@ -275,6 +275,16 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
 
   const handlePlaySurah = (surah: Surah) => {
     if (!selectedRecitation || !sheikh) return
+
+    // Check if we are interacting with the currently active track
+    if (currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id)) {
+      if (isPlaying) {
+        pause()
+      } else {
+        resume()
+      }
+      return
+    }
 
     const surahNum = String(surah.id).padStart(3, "0")
     const audioUrl = `${selectedRecitation.server}${surahNum}.mp3`
@@ -460,10 +470,9 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
               </div>
               <div className="space-y-4">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">{sheikh?.name}</h1>
-                <p className="text-muted-foreground">{sheikh?.country || "قارئ قرآن كريم"}</p>
                 <div className="space-y-2">
                   <h2 className="text-xl font-bold">السيرة الذاتية</h2>
-                  <p className="text-muted-foreground">{sheikh?.bio || "قارئ قرآن كريم متميز"}</p>
+                  <p className="text-muted-foreground ">{sheikh?.bio || "قارئٌ للقرآن الكريم، سخّر صوته لخدمة كتاب الله، ملتزم بأحكام التجويد ونقل التلاوة كما أُنزلت، يجمع بين جمال الأداء وخشوع التلاوة، ليصل بالقرآن إلى القلوب قبل الآذان، سائلًا الله أن يجعل ما يقدّمه خالصًا لوجهه الكريم."}</p>
                 </div>
               </div>
             </div>
