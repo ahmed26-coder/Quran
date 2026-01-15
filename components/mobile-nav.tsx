@@ -58,6 +58,13 @@ export function MobileNav() {
               الأدعية
             </Link>
             <Link
+              href="/quiz"
+              className="text-base font-medium transition-colors hover:text-emerald-600"
+              onClick={() => setOpen(false)}
+            >
+              الاختبارات
+            </Link>
+            <Link
               href="/contact"
               className="text-base font-medium transition-colors hover:text-emerald-600"
               onClick={() => setOpen(false)}
