@@ -584,7 +584,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
               </div>
             ) : null}
 
-            <div className="bg-white dark:bg-card border-2 border-emerald-50 dark:border-emerald-950/20 rounded-3xl shadow-sm overflow-hidden min-h-[800px]">
+            <div className="bg-white dark:bg-card border-2 border-emerald-50 dark:border-emerald-950/20 rounded-3xl shadow-sm overflow-hidden min-h-auto">
               {readerMode === "text" ? (
                 <div className="p-8 md:p-16 max-w-4xl mx-auto space-y-12">
                   {/* Header Decoration */}
@@ -630,8 +630,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                   </div>
                 </div>
               ) : (
-                <div className="relative w-full min-h-[800px] flex flex-col items-center bg-[#fffdf5] dark:bg-[#1a1c1e]/10 py-10 px-4">
-                  <div className="relative bg-[#fffdf5] w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">
+                <div className="relative w-full h-auto flex flex-col items-center bg-[#fffdf5] dark:bg-[#1a1c1e]/10 py-10 px-4">
+                  <div className="relative bg-[#fffdf5] h-auto w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">
                     <Image
                       src={`https://raw.githubusercontent.com/GovarJabbar/Quran-PNG/master/${currentPage.toString().padStart(3, '0')}.png`}
                       alt={`الصفحة رقم ${currentPage}`}

@@ -3,7 +3,7 @@
 import { useAudioPlayer } from './audio-player-provider'
 import { Button } from './ui/button'
 import { Play, Pause, SkipBack, SkipForward, Volume2, X, Minimize2, Maximize2 } from 'lucide-react'
-import { useState, memo } from 'react'
+import { useState, memo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 function PersistentAudioPlayerComponent() {
@@ -19,10 +19,25 @@ function PersistentAudioPlayerComponent() {
         currentTime,
         duration,
         volume,
-        setVolume
+        setVolume,
+        close
     } = useAudioPlayer()
 
     const [isMinimized, setIsMinimized] = useState(false)
+
+    // Load minimized state on mount
+    useEffect(() => {
+        const savedMinimized = localStorage.getItem('quran-player-minimized')
+        if (savedMinimized === 'true') {
+            setIsMinimized(true)
+        }
+    }, [])
+
+    const toggleMinimize = () => {
+        const newState = !isMinimized
+        setIsMinimized(newState)
+        localStorage.setItem('quran-player-minimized', String(newState))
+    }
 
     if (!currentTrack) return null
 
@@ -78,6 +93,13 @@ function PersistentAudioPlayerComponent() {
 
                                 {/* Playback Controls */}
                                 <div className="flex items-center gap-1 sm:gap-2">
+
+                                    {/* Close Button Mobile/Desktop Left */}
+                                    {/* We can put X here or at the far end. Usually X is far end or separate. 
+                                        Let's put navigation first then X at end? 
+                                        Or keep structure.
+                                     */}
+
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -110,27 +132,47 @@ function PersistentAudioPlayerComponent() {
                                     </Button>
                                 </div>
 
-                                {/* Volume & Actions */}
+                                {/* Volume & Actions (Desktop) */}
                                 <div className="hidden sm:flex items-center gap-2">
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => setIsMinimized(!isMinimized)}
+                                        onClick={toggleMinimize}
                                         className="h-10 w-10 hover:bg-white/20 text-white"
+                                        title="تصغير"
                                     >
                                         <Minimize2 className="h-5 w-5" />
                                     </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={close}
+                                        className="h-10 w-10 hover:bg-red-500/20 text-white hover:text-red-100"
+                                        title="إغلاق"
+                                    >
+                                        <X className="h-5 w-5" />
+                                    </Button>
                                 </div>
 
-                                {/* Mobile minimize */}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setIsMinimized(!isMinimized)}
-                                    className="sm:hidden h-8 w-8 hover:bg-white/20 text-white"
-                                >
-                                    <Minimize2 className="h-4 w-4" />
-                                </Button>
+                                {/* Mobile Actions */}
+                                <div className="flex sm:hidden items-center">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={toggleMinimize}
+                                        className="h-8 w-8 hover:bg-white/20 text-white"
+                                    >
+                                        <Minimize2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={close}
+                                        className="h-8 w-8 hover:bg-red-500/20 text-white hover:text-red-100"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -153,14 +195,26 @@ function PersistentAudioPlayerComponent() {
                                     <p className="text-xs opacity-80 truncate">{currentTrack.reciterName}</p>
                                 </div>
                             </div>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setIsMinimized(false)}
-                                className="h-10 w-10 hover:bg-white/20 text-white shrink-0"
-                            >
-                                <Maximize2 className="h-5 w-5" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => toggleMinimize()} // Un-minimize
+                                    className="h-10 w-10 hover:bg-white/20 text-white shrink-0"
+                                    title="تكبير"
+                                >
+                                    <Maximize2 className="h-5 w-5" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={close}
+                                    className="h-10 w-10 hover:bg-red-500/20 text-white hover:text-red-100 shrink-0"
+                                    title="إغلاق"
+                                >
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </div>
                         </div>
                     )}
                 </div>

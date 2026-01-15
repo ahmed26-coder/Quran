@@ -28,6 +28,8 @@ export async function GET(req: NextRequest) {
         }
     }
 
+    const returnAll = searchParams.get('all') === 'true';
+
     try {
         // We fetch from GitHub instead of azkar.ml to avoid DNS issues (ENOTFOUND .ml)
         const res = await fetch(DATA_SOURCE, {
@@ -43,6 +45,16 @@ export async function GET(req: NextRequest) {
 
         if (!categoryData || !Array.isArray(categoryData)) {
             return NextResponse.json({ error: "Category not found" }, { status: 404 });
+        }
+
+        if (returnAll) {
+            const mappedAllData = categoryData.map((item: any) => ({
+                zekr: item.content,
+                repeat: parseInt(item.count) || 1,
+                bless: item.description || "",
+                source: item.reference || ""
+            }));
+            return NextResponse.json(mappedAllData);
         }
 
         // Pick a random zekr

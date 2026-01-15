@@ -67,7 +67,8 @@ function SupplicationsContent() {
   const categoryParam = searchParams.get("category")
 
   const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0].id)
-  const [zekr, setZekr] = useState<AzkarResponse | null>(null)
+  const [azkarList, setAzkarList] = useState<AzkarResponse[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -81,30 +82,54 @@ function SupplicationsContent() {
     }
   }, [categoryParam])
 
+  // Load progress from local storage
+  useEffect(() => {
+    const savedIndex = localStorage.getItem(`azkar-index-${activeCategory}`)
+    if (savedIndex) {
+      setCurrentIndex(parseInt(savedIndex, 10))
+    } else {
+      setCurrentIndex(0)
+    }
+  }, [activeCategory])
 
-  const fetchZekr = useCallback(async (categoryId: string) => {
+  // Save progress to local storage
+  useEffect(() => {
+    localStorage.setItem(`azkar-index-${activeCategory}`, currentIndex.toString())
+  }, [currentIndex, activeCategory])
+
+
+  const fetchAzkar = useCallback(async (categoryId: string) => {
     setLoading(true)
     setError(null)
     const category = CATEGORIES.find(c => c.id === categoryId)
     if (!category) return
 
-    // Use our local proxy to avoid CORS issues
     try {
-      const res = await fetch(`/api/proxy-azkar?${category.param}&json=true`, {
+      // Fetch all items with returning all=true
+      const res = await fetch(`/api/proxy-azkar?${category.param}&json=true&all=true`, {
         cache: "no-store"
       })
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("Proxy returned error:", res.status, errData);
-        throw new Error(`فشل في جلب الذكر (${res.status})`)
+        throw new Error(`فشل في جلب الأذكار (${res.status})`)
       }
 
-      const data: AzkarResponse = await res.json()
-      setZekr(data)
+      const data: AzkarResponse[] = await res.json()
+      setAzkarList(data)
+
+      // Validation: Ensure current index is valid for new list
+      const savedIndex = localStorage.getItem(`azkar-index-${categoryId}`)
+      const idx = savedIndex ? parseInt(savedIndex, 10) : 0
+
+      if (idx >= data.length) {
+        setCurrentIndex(0)
+      } else {
+        setCurrentIndex(idx)
+      }
+
     } catch (err: any) {
-      console.error("Fetch zekr error:", err.message);
-      setError(err.message || "حدث خطأ أثناء تحميل الذكر، يرجى المحاولة مرة أخرى.")
+      console.error("Fetch azkar error:", err.message);
+      setError(err.message || "حدث خطأ أثناء تحميل الأذكار.")
     } finally {
       setLoading(false)
     }
@@ -112,12 +137,32 @@ function SupplicationsContent() {
 
   // Initial fetch on component mount or category change
   useEffect(() => {
-    fetchZekr(activeCategory)
-  }, [activeCategory, fetchZekr])
+    fetchAzkar(activeCategory)
+  }, [activeCategory, fetchAzkar])
 
-  const handleRefresh = () => {
-    fetchZekr(activeCategory)
+  const handleNext = () => {
+    if (currentIndex < azkarList.length - 1) {
+      setCurrentIndex(prev => prev + 1)
+    } else {
+      // Loop back to start or handle completion
+      setCurrentIndex(0)
+    }
   }
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1)
+    }
+  }
+
+  const handleReset = () => {
+    setCurrentIndex(0)
+    localStorage.removeItem(`azkar-index-${activeCategory}`)
+    // We might want to clear all repeats, but for now just the start index is enough or maybe iterate?
+    // Clearing all repeats would require knowing all keys. We'll leave them as "history" or maybe clear on completion.
+  }
+
+  const currentZekr = azkarList[currentIndex]
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-background">
@@ -184,7 +229,7 @@ function SupplicationsContent() {
                     className="flex flex-col items-center justify-center py-20"
                   >
                     <Loader2 className="h-12 w-12 animate-spin text-emerald-600" />
-                    <p className="mt-4 text-emerald-600 font-medium">جاري إحضار ذكر جديد...</p>
+                    <p className="mt-4 text-emerald-600 font-medium">جاري إحضار الأذكار...</p>
                   </motion.div>
                 ) : error ? (
                   <motion.div
@@ -195,10 +240,25 @@ function SupplicationsContent() {
                     className="text-center space-y-4 py-10"
                   >
                     <p className="text-red-500">{error}</p>
-                    <Button onClick={handleRefresh} variant="outline">إعادة المحاولة</Button>
+                    <Button onClick={() => fetchAzkar(activeCategory)} variant="outline">إعادة المحاولة</Button>
                   </motion.div>
-                ) : zekr ? (
-                  <SupplicationCard zekr={zekr} onRefresh={handleRefresh} />
+                ) : currentZekr ? (
+                  <div className="w-full space-y-4">
+                    <div className="flex justify-center items-center font-medium gap-2 mb-4 text-sm text-muted-foreground">
+                      <span>الذكر {currentIndex + 1} من {azkarList.length}</span>
+                    </div>
+                    <SupplicationCard
+                      key={`${activeCategory}-${currentIndex}`} // Force remount on change
+                      zekr={currentZekr}
+                      onNext={handleNext}
+                      onPrevious={handlePrevious}
+                      storageKey={`azkar-repeat-${activeCategory}-${currentIndex}`}
+                      onReset={handleReset}
+                      showReset={currentIndex > 0}
+                      hasPrevious={currentIndex > 0}
+                      hasNext={currentIndex < azkarList.length - 1}
+                    />
+                  </div>
                 ) : null}
               </AnimatePresence>
             </div>
@@ -222,8 +282,32 @@ function SupplicationsContent() {
   )
 }
 
-function SupplicationCard({ zekr, onRefresh }: { zekr: AzkarResponse; onRefresh: () => void }) {
+import { ChevronLeft, ChevronRight } from "lucide-react"
+
+function SupplicationCard({
+  zekr, onNext, onPrevious, storageKey, onReset, showReset, hasPrevious, hasNext
+}: {
+  zekr: AzkarResponse;
+  onNext: () => void;
+  onPrevious: () => void;
+  storageKey: string,
+  onReset: () => void,
+  showReset: boolean,
+  hasPrevious: boolean,
+  hasNext: boolean
+}) {
   const [isCopied, setIsCopied] = useState(false)
+  const [currentRepeat, setCurrentRepeat] = useState(0)
+
+  // Initialize repeat count from storage
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey)
+    if (saved) {
+      setCurrentRepeat(parseInt(saved, 10))
+    } else {
+      setCurrentRepeat(0)
+    }
+  }, [storageKey])
 
   const handleCopy = () => {
     navigator.clipboard.writeText(zekr.zekr)
@@ -231,9 +315,37 @@ function SupplicationCard({ zekr, onRefresh }: { zekr: AzkarResponse; onRefresh:
     setTimeout(() => setIsCopied(false), 2000)
   }
 
+  const handleInteraction = () => {
+    const target = zekr.repeat || 1
+
+    // If it has repetitions
+    if (target > 1) {
+      const nextVal = currentRepeat + 1
+      setCurrentRepeat(nextVal)
+      localStorage.setItem(storageKey, nextVal.toString())
+
+      if (nextVal >= target) {
+        // Completed repetitions, move to next after short delay
+        setTimeout(() => {
+          localStorage.removeItem(storageKey) // Clear repeat progress for this item
+          onNext()
+        }, 300)
+      }
+    } else {
+      // No repetitions, just go next
+      onNext()
+    }
+  }
+
+  // Calculate progress for button text
+  const target = zekr.repeat || 1
+  const isCompleted = currentRepeat >= target
+  const buttonText = target > 1
+    ? `${currentRepeat}/${target}`
+    : "ذكر آخر"
+
   return (
     <motion.div
-      key={zekr.zekr} // Key helps Framer Motion animate between different zekrs
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -256,7 +368,10 @@ function SupplicationCard({ zekr, onRefresh }: { zekr: AzkarResponse; onRefresh:
           )}
         </CardHeader>
 
-        <CardContent className="pt-8 pb-8 px-6 md:px-10 text-center space-y-9">
+        <CardContent
+          className="pt-8 pb-8 px-6 md:px-10 text-center space-y-9 cursor-pointer select-none active:scale-[0.99] transition-transform"
+          onClick={handleInteraction}
+        >
           <p className="text-2xl gap-5 md:text-3xl lg:text-4xl leading-[2.2] font-amiri text-emerald-950 dark:text-emerald-50">
             {zekr.zekr}
           </p>
@@ -280,25 +395,56 @@ function SupplicationCard({ zekr, onRefresh }: { zekr: AzkarResponse; onRefresh:
             <span>{zekr.source || "المصدر غير متوفر"}</span>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
+            {showReset && (
+              <Button variant="ghost" size="sm" onClick={onReset} className="h-9 px-3 text-xs text-muted-foreground hover:text-red-600">
+                إعادة البدء
+              </Button>
+            )}
+
             <Button
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className={`flex-1 md:flex-none gap-2 ${isCopied ? "border-emerald-500 text-emerald-600" : ""}`}
+              className={`gap-2 ${isCopied ? "border-emerald-500 text-emerald-600" : ""}`}
             >
               {isCopied ? "تم النسخ" : "نسخ النص"}
               <Copy className="h-4 w-4" />
             </Button>
 
-            <Button
-              onClick={onRefresh}
-              size="sm"
-              className="flex-1 md:flex-none gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              ذكر آخر
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1 w-full sm:w-auto justify-center mt-2 sm:mt-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onPrevious}
+                disabled={!hasPrevious}
+                className="h-9 w-9 rounded-full border border-emerald-400 text-emerald-500 hover:text-emerald-700 dark:border-emerald-900"
+                title="السابق"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+
+              <Button
+                onClick={handleInteraction}
+                size="sm"
+                disabled={isCompleted && target > 1}
+                className="flex-1 sm:flex-none gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[100px]"
+              >
+                {buttonText}
+                {target <= 1 && <RefreshCw className="h-4 w-4" />}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNext}
+                disabled={!hasNext}
+                className="h-9 w-9 rounded-full border border-emerald-400 text-emerald-500 hover:text-emerald-700 dark:border-emerald-900"
+                title="التالي"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardFooter>
       </Card>

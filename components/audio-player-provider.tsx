@@ -26,6 +26,7 @@ interface AudioPlayerContextType {
     duration: number
     volume: number
     setVolume: (volume: number) => void
+    close: () => void
 }
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined)
@@ -280,6 +281,19 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         }
     }, [])
 
+    const close = useCallback(() => {
+        if (audioRef.current) {
+            audioRef.current.pause()
+            audioRef.current.currentTime = 0
+        }
+        setIsPlaying(false)
+        setCurrentTrack(null)
+        setPlaylist([]) // Optionally clear playlist or keep it? user said "close it partially" implies stopping? "close it totally" -> clear.
+
+        // Clear state from local storage so it doesn't reopen
+        localStorage.removeItem('quran-audio-state')
+    }, [])
+
     const value: AudioPlayerContextType = {
         isPlaying,
         currentTrack,
@@ -291,6 +305,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         next,
         previous,
         seek,
+        close,
         currentTime,
         duration,
         volume,
