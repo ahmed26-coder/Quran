@@ -868,29 +868,34 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                   </div>
 
                   {/* Page Navigation Controls (Text Mode) */}
-                  <div className="mt-12 flex items-center justify-center gap-6 pb-10">
+                  <div className="mt-8 sm:mt-12 flex items-center justify-center gap-3 sm:gap-6">
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="h-12 px-6 font-semibold border-2 border-emerald-200 dark:border-emerald-800 rounded-xl"
+                      className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
                     >
-                      <ChevronRight className="ml-2 h-5 w-5" />
-                      السابقة
+                      <ChevronRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="hidden sm:inline">الصفحة السابقة</span>
+                      <span className="sm:hidden">السابقة</span>
                     </Button>
-                    <div className="px-6 py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-800 font-bold text-emerald-700">
-                      صفحة {currentPage}
+
+                    <div className="flex flex-col items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-800">
+                      <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium">الصفحة</span>
+                      <span className="text-xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-300">{currentPage}</span>
                     </div>
+
                     <Button
                       variant="outline"
                       size="lg"
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === 604}
-                      className="h-12 px-6 font-semibold border-2 border-emerald-200 dark:border-emerald-800 rounded-xl"
+                      className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
                     >
-                      التالية
-                      <ChevronLeft className="mr-2 h-5 w-5" />
+                      <span className="hidden sm:inline">الصفحة التالية</span>
+                      <span className="sm:hidden">التالية</span>
+                      <ChevronLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                   </div>
                 </div>
