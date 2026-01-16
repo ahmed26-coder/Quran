@@ -1,11 +1,12 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toPng } from "html-to-image"
 import { Share2, Loader2, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Quote } from "lucide-react"
+import Link from "next/link"
 
 interface ShareSupplicationProps {
     zekr: {
@@ -19,6 +20,11 @@ interface ShareSupplicationProps {
 export function ShareSupplication({ zekr }: ShareSupplicationProps) {
     const [isGenerating, setIsGenerating] = useState(false)
     const templateRef = useRef<HTMLDivElement>(null)
+    const [currentUrl, setCurrentUrl] = useState<string>("")
+
+    useEffect(() => {
+        setCurrentUrl(window.location.href)
+    }, [])
 
     const generateImage = async () => {
         if (!templateRef.current) return null
@@ -55,8 +61,7 @@ export function ShareSupplication({ zekr }: ShareSupplicationProps) {
                 await navigator.share({
                     files: [file],
                     title: "بوابة القرآن",
-                    text: `بوابة القرآن: ${window.location.href}`,
-                    url: window.location.href,
+                    text: `بوابة القرآن: ${currentUrl}`,
                 })
             } catch (err) {
                 if ((err as Error).name !== "AbortError") {
@@ -102,61 +107,63 @@ export function ShareSupplication({ zekr }: ShareSupplicationProps) {
       `}</style>
 
             {/* Hidden template for image generation */}
-            <div className="fixed -left-[9999px] top-0 pointer-events-none">
-                <div
-                    ref={templateRef}
-                    className="w-[600px] p-10 bg-white relative overflow-hidden flex flex-col items-center text-center"
-                    dir="rtl"
-                    style={{
-                        fontFamily: "var(--font-tajawal), 'Tajawal', sans-serif",
-                        backgroundImage: "radial-gradient(circle at top right, #f0fdf4 0%, transparent 40%), radial-gradient(circle at bottom left, #f0fdf4 0%, transparent 40%)"
-                    }}
-                >
-                    {/* Decorative Corner */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[100%] opacity-50 -z-10" />
-                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-50 rounded-tr-[100%] opacity-50 -z-10" />
-
-                    {/* Icon */}
-                    <div className="mb-8">
-                        <div className="bg-emerald-100 p-4 rounded-full inline-block shadow-sm ring-1 ring-emerald-200">
-                            <Quote className="h-8 w-8 text-emerald-700" />
-                        </div>
-                    </div>
-
-                    {/* Zekr Text */}
-                    <p
-                        className="text-3xl leading-[1.8] text-emerald-950 mb-8 font-amiri"
-                        style={{ fontFamily: "var(--font-amiri), 'Amiri', serif" }}
+            <Link href={currentUrl} target="_blank">
+                <div className="fixed -left-[9999px] top-0">
+                    <div
+                        ref={templateRef}
+                        className="w-[600px] p-10 bg-white relative overflow-hidden flex flex-col items-center text-center"
+                        dir="rtl"
+                        style={{
+                            fontFamily: "var(--font-tajawal), 'Tajawal', sans-serif",
+                            backgroundImage: "radial-gradient(circle at top right, #f0fdf4 0%, transparent 40%), radial-gradient(circle at bottom left, #f0fdf4 0%, transparent 40%)"
+                        }}
                     >
-                        {zekr.zekr}
-                    </p>
+                        {/* Decorative Corner */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-[100%] opacity-50 -z-10" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-50 rounded-tr-[100%] opacity-50 -z-10" />
 
-                    {/* Blessings/Benefit */}
-                    {zekr.bless && (
-                        <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 text-emerald-800 text-lg mb-8 max-w-[90%] mx-auto">
-                            <span className="font-bold underline decoration-emerald-200 underline-offset-4 ml-1">الفضل:</span>
-                            <span className="opacity-90">{zekr.bless}</span>
-                        </div>
-                    )}
-
-                    {/* Divider */}
-                    <div className="w-1/2 h-0.5 bg-gradient-to-r from-transparent via-emerald-200 to-transparent mb-8" />
-
-                    {/* Footer Info */}
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="text-emerald-700 text-sm font-medium opacity-80 flex items-center gap-2">
-                            <LinkIcon className="h-3 w-3" />
-                            <span>{zekr.source || "بوابة القرآن"}</span>
+                        {/* Icon */}
+                        <div className="mb-8">
+                            <div className="bg-emerald-100 p-4 rounded-full inline-block shadow-sm ring-1 ring-emerald-200">
+                                <Quote className="h-8 w-8 text-emerald-700" />
+                            </div>
                         </div>
 
-                        <div className="flex items-center gap-2 mt-2">
-                            <div className="px-3 py-1 bg-emerald-600 text-white rounded-full text-xs font-bold shadow-sm">
-                                quranee.netlify.app
+                        {/* Zekr Text */}
+                        <p
+                            className="text-3xl leading-[1.8] text-emerald-950 mb-8 font-amiri"
+                            style={{ fontFamily: "var(--font-amiri), 'Amiri', serif" }}
+                        >
+                            {zekr.zekr}
+                        </p>
+
+                        {/* Blessings/Benefit */}
+                        {zekr.bless && (
+                            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 text-emerald-800 text-lg mb-8 max-w-[90%] mx-auto">
+                                <span className="font-bold underline decoration-emerald-200 underline-offset-4 ml-1">الفضل:</span>
+                                <span className="opacity-90">{zekr.bless}</span>
+                            </div>
+                        )}
+
+                        {/* Divider */}
+                        <div className="w-1/2 h-0.5 bg-gradient-to-r from-transparent via-emerald-200 to-transparent mb-8" />
+
+                        {/* Footer Info */}
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="text-emerald-700 text-sm font-medium opacity-80 flex items-center gap-2">
+                                <LinkIcon className="h-3 w-3" />
+                                <span>{zekr.source || "بوابة القرآن"}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-2">
+                                <div className="px-3 py-1 bg-emerald-600 text-white rounded-full text-xs font-bold shadow-sm">
+                                    quranee.netlify.app
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </Link>
         </>
     )
 }
