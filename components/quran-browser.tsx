@@ -32,6 +32,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { fetchAvailableTafseers, fetchTafseerForAyahs, type TafseerSource, type TafseerText } from "@/lib/tafseer-api"
+import { Slider } from "@/components/ui/slider"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface Surah {
   number: number
@@ -77,6 +83,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
   // Data State
   const [surahContent, setSurahContent] = useState<Ayah[]>([])
+  const [pageContent, setPageContent] = useState<Ayah[]>([])
+  const [fontSize, setFontSize] = useState<number>(24)
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
@@ -102,8 +110,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
   const activeSurah = useMemo(() => surahs.find(s => s.number === currentSurahNum), [surahs, currentSurahNum])
 
   // --- Persistence Handlers ---
-  const saveState = useCallback((surah: number, page: number, juz: number, mode: "text" | "image") => {
-    localStorage.setItem("quran-state", JSON.stringify({ surah, page, juz, readerMode: mode }))
+  const saveState = useCallback((surah: number, page: number, juz: number, mode: "text" | "image", size: number) => {
+    localStorage.setItem("quran-state", JSON.stringify({ surah, page, juz, readerMode: mode, fontSize: size }))
   }, [])
 
   // --- Data Fetching ---
@@ -125,6 +133,23 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     return []
   }, [])
 
+  const fetchPageData = useCallback(async (page: number) => {
+    setIsLoading(true)
+    try {
+      const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`)
+      const data = await res.json()
+      if (data.code === 200) {
+        setPageContent(data.data.ayahs)
+        return data.data.ayahs
+      }
+    } catch (error) {
+      console.error("Failed to fetch page content", error)
+    } finally {
+      setIsLoading(false)
+    }
+    return []
+  }, [])
+
   // --- Actions ---
 
   const handleSelectSurah = async (num: number) => {
@@ -135,7 +160,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       const juz = ayahs[0].juz
       setCurrentPage(page)
       setCurrentJuz(juz)
-      saveState(num, page, juz, readerMode)
+      await fetchPageData(page)
+      saveState(num, page, juz, readerMode, fontSize)
     }
   }
 
@@ -153,7 +179,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
         setCurrentSurahNum(surahNum)
         setCurrentPage(page)
         await fetchSurahData(surahNum)
-        saveState(surahNum, page, juz, readerMode)
+        await fetchPageData(page)
+        saveState(surahNum, page, juz, readerMode, fontSize)
       }
     } catch (error) {
       console.error("Failed to fetch juz info", error)
@@ -179,7 +206,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
           setCurrentSurahNum(surahNum)
           await fetchSurahData(surahNum)
         }
-        saveState(surahNum, page, juz, readerMode)
+        await fetchPageData(page)
+        saveState(surahNum, page, juz, readerMode, fontSize)
       }
     } catch (error) {
       console.error("Failed to fetch page info", error)
@@ -190,13 +218,19 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
   const toggleReaderMode = (mode: "text" | "image") => {
     setReaderMode(mode)
-    saveState(currentSurahNum, currentPage, currentJuz, mode)
+    saveState(currentSurahNum, currentPage, currentJuz, mode, fontSize)
   }
 
   const toggleToolbar = () => {
     const newState = !isToolbarMinimized
     setIsToolbarMinimized(newState)
     localStorage.setItem("quran-toolbar-minimized", String(newState))
+  }
+
+  const handleFontSizeChange = (value: number[]) => {
+    const newSize = value[0]
+    setFontSize(newSize)
+    saveState(currentSurahNum, currentPage, currentJuz, readerMode, newSize)
   }
 
   // --- Search Logic ---
@@ -250,7 +284,8 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       setCurrentPage(ayah.page)
       setCurrentJuz(ayah.juz)
       await fetchSurahData(ayah.surah.number)
-      saveState(ayah.surah.number, ayah.page, ayah.juz, readerMode)
+      await fetchPageData(ayah.page)
+      saveState(ayah.surah.number, ayah.page, ayah.juz, readerMode, fontSize)
     }
     setIsSearchOpen(false)
     setSearchQuery("")
@@ -339,6 +374,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     let initialPageNum = 1
     let initialJuzNum = 1
     let initialMode: "text" | "image" = "image"
+    let initialFontSize = 24
 
     // Load minimized state
     const savedMinimized = localStorage.getItem("quran-toolbar-minimized")
@@ -352,6 +388,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
           initialPageNum = parsed.page || 1
           initialJuzNum = parsed.juz || 1
           if (!initialAyah) initialMode = parsed.readerMode || "image"
+          initialFontSize = parsed.fontSize || 24
         } catch (e) {
           console.error("Failed to parse saved state", e)
         }
@@ -375,8 +412,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       setCurrentPage(initialPageNum)
       setCurrentJuz(initialJuzNum)
       setReaderMode(initialMode)
+      setFontSize(initialFontSize)
 
       await fetchSurahData(initialSurahNum)
+      await fetchPageData(initialPageNum)
       setIsInitialized(true)
     }
 
@@ -664,6 +703,35 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                       <span className="hidden md:inline">التفسير</span>
                     </Button>
 
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-10 px-3 items-center rounded-xl flex border-emerald-200 dark:border-emerald-800"
+                          title="حجم الخط"
+                        >
+                          <Type className="h-4 w-4 md:ml-2" />
+                          <span className="inline text-xs font-bold">{fontSize} حجم الخط</span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-60 p-4">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">حجم الخط</span>
+                            <span className="text-sm font-bold text-emerald-600">{fontSize}px</span>
+                          </div>
+                          <Slider
+                            value={[fontSize]}
+                            onValueChange={handleFontSizeChange}
+                            min={16}
+                            max={64}
+                            step={1}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -737,47 +805,93 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
 
             <div className="bg-white dark:bg-card border-2 border-emerald-50 dark:border-emerald-950/20 rounded-3xl shadow-sm overflow-hidden min-h-auto">
               {readerMode === "text" ? (
-                <div className="p-8 md:p-16 max-w-4xl mx-auto space-y-12">
-                  {/* Header Decoration */}
-                  <div className="text-center space-y-4">
-                    <div className="flex justify-center">
-                      <div className="h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent w-full" />
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-amiri text-emerald-900 dark:text-emerald-100">{activeSurah?.name}</h2>
-                    <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Badge variant="outline">{activeSurah?.revelationType === "Meccan" ? "مكية" : "مدنية"}</Badge></span>
-                      <span className="flex items-center gap-1"><Badge variant="outline">{activeSurah?.numberOfVerses} آية</Badge></span>
-                    </div>
-                    <div className="flex justify-center">
-                      <div className="h-px bg-gradient-to-r from-transparent via-emerald-200 to-transparent w-full" />
-                    </div>
+                <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
+                  <div
+                    className="font-amiri text-justify leading-[2.5] text-emerald-950 dark:text-emerald-50 space-y-8"
+                    dir="rtl"
+                    style={{ fontSize: `${fontSize}px` }}
+                  >
+                    {/* Group ayahs by surah in case a page spans multiple surahs */}
+                    {Object.entries(
+                      pageContent.reduce((acc: Record<number, Ayah[]>, ayah) => {
+                        // Assuming ayah object from API has surah info or we can use the juz/page context
+                        // The AlQuran.cloud /page/{page} returns ayahs with surah object
+                        const sNum = (ayah as any).surah?.number || currentSurahNum
+                        if (!acc[sNum]) acc[sNum] = []
+                        acc[sNum].push(ayah)
+                        return acc
+                      }, {})
+                    ).map(([sNum, ayahs]) => {
+                      const surahInfo = (ayahs[0] as any).surah || activeSurah
+                      const showBasmala = parseInt(sNum) !== 1 && parseInt(sNum) !== 9 && ayahs[0].numberInSurah === 1
+
+                      return (
+                        <div key={sNum} className="space-y-6">
+                          <div className="text-center py-4">
+                            <h3 className="text-2xl font-bold text-emerald-800 dark:text-emerald-400 font-amiri border-y-2 border-emerald-100 dark:border-emerald-900/30 py-2 inline-block px-8 rounded-full">
+                              سورة {surahInfo.name}
+                            </h3>
+                          </div>
+
+                          {showBasmala && (
+                            <div className="text-center py-4">
+                              <p className="font-amiri text-emerald-800 dark:text-emerald-400 opacity-90" style={{ fontSize: `${fontSize * 1.2}px` }}>
+                                بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="max-h-none overflow-visible">
+                            {ayahs.map((ayah) => (
+                              <span
+                                key={ayah.number}
+                                id={`ayah-${ayah.numberInSurah}`}
+                                className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8"
+                              >
+                                {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
+                                <span
+                                  className="inline-flex items-center justify-center mx-2 align-middle border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold"
+                                  style={{
+                                    width: `${fontSize * 1.1}px`,
+                                    height: `${fontSize * 1.1}px`,
+                                    fontSize: `${fontSize * 0.45}px`
+                                  }}
+                                >
+                                  {ayah.numberInSurah}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
 
-                  {/* Basmala */}
-                  {activeSurah?.number !== 1 && activeSurah?.number !== 9 && (
-                    <div className="text-center py-3 md:py-8">
-                      <p className="font-amiri text-3xl md:text-4xl text-emerald-800 dark:text-emerald-400">
-                        بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                      </p>
+                  {/* Page Navigation Controls (Text Mode) */}
+                  <div className="mt-12 flex items-center justify-center gap-6 pb-10">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-12 px-6 font-semibold border-2 border-emerald-200 dark:border-emerald-800 rounded-xl"
+                    >
+                      <ChevronRight className="ml-2 h-5 w-5" />
+                      السابقة
+                    </Button>
+                    <div className="px-6 py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-800 font-bold text-emerald-700">
+                      صفحة {currentPage}
                     </div>
-                  )}
-
-                  {/* Ayahs */}
-                  <div className="max-h-[70vh] overflow-y-auto custom-scrollbar p-4 md:p-8 rounded-2xl bg-white/50 dark:bg-black/5 border border-emerald-50 dark:border-emerald-900/10 shadow-inner">
-                    <div className="font-amiri text-xl md:text-3xl lg:text-4xl leading-[3.5] md:leading-[3.5] text-justify text-emerald-950 dark:text-emerald-50" dir="rtl">
-                      {surahContent.map((ayah) => (
-                        <span
-                          key={ayah.number}
-                          id={`ayah-${ayah.numberInSurah}`}
-                          className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8"
-                        >
-                          {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
-                          <span className="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 mx-2 align-middle text-sm md:text-base border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold">
-                            {ayah.numberInSurah}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === 604}
+                      className="h-12 px-6 font-semibold border-2 border-emerald-200 dark:border-emerald-800 rounded-xl"
+                    >
+                      التالية
+                      <ChevronLeft className="mr-2 h-5 w-5" />
+                    </Button>
                   </div>
                 </div>
               ) : (
