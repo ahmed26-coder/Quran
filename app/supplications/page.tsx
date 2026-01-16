@@ -9,6 +9,7 @@ import { Copy, Loader2, RefreshCw, Quote, ExternalLink } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
+import { ShareSupplication } from "@/components/share-supplication"
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -390,18 +391,48 @@ function SupplicationCard({
         </CardContent>
 
         <CardFooter className="flex flex-col md:flex-row justify-between items-center gap-4 py-4 px-6 bg-muted/20 border-t">
-          <div className="text-xs text-muted-foreground flex items-center gap-2">
-            <ExternalLink className="h-3 w-3" />
-            <span>{zekr.source || "المصدر غير متوفر"}</span>
+          <div className=" hidden sm:flex flex-col gap-1">
+            <ShareSupplication zekr={zekr} />
           </div>
+          <div className="flex items-center gap-1 w-full sm:w-auto justify-center mt-2 sm:mt-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onPrevious}
+              disabled={!hasPrevious}
+              className="h-9 w-9 rounded-full border border-emerald-400 text-emerald-500 hover:text-emerald-700 dark:border-emerald-900"
+              title="السابق"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
 
-          <div className="flex flex-wrap items-center justify-center gap-2 w-full md:w-auto">
+            <Button
+              onClick={handleInteraction}
+              size="sm"
+              disabled={isCompleted && target > 1}
+              className="flex-1 sm:flex-none gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[100px]"
+            >
+              {buttonText}
+              {target <= 1 && <RefreshCw className="h-4 w-4" />}
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onNext}
+              disabled={!hasNext}
+              className="h-9 w-9 rounded-full border border-emerald-400 text-emerald-500 hover:text-emerald-700 dark:border-emerald-900"
+              title="التالي"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
             {showReset && (
-              <Button variant="ghost" size="sm" onClick={onReset} className="h-9 px-3 text-xs text-muted-foreground hover:text-red-600">
+              <Button variant="ghost" size="sm" onClick={onReset} className="hidden sm:block h-9 px-3 text-xs border text-muted-foreground hover:text-red-600">
                 إعادة البدء
               </Button>
             )}
-
+          </div>
+          <div className="flex items-center justify-center gap-2 w-full md:w-auto">
             <Button
               variant="outline"
               size="sm"
@@ -411,40 +442,14 @@ function SupplicationCard({
               {isCopied ? "تم النسخ" : "نسخ النص"}
               <Copy className="h-4 w-4" />
             </Button>
-
-            <div className="flex items-center gap-1 w-full sm:w-auto justify-center mt-2 sm:mt-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onPrevious}
-                disabled={!hasPrevious}
-                className="h-9 w-9 rounded-full border border-emerald-400 text-emerald-500 hover:text-emerald-700 dark:border-emerald-900"
-                title="السابق"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-
-              <Button
-                onClick={handleInteraction}
-                size="sm"
-                disabled={isCompleted && target > 1}
-                className="flex-1 sm:flex-none gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[100px]"
-              >
-                {buttonText}
-                {target <= 1 && <RefreshCw className="h-4 w-4" />}
-              </Button>
-
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onNext}
-                disabled={!hasNext}
-                className="h-9 w-9 rounded-full border border-emerald-400 text-emerald-500 hover:text-emerald-700 dark:border-emerald-900"
-                title="التالي"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+            <div className="flex sm:hidden flex-col gap-1">
+              <ShareSupplication zekr={zekr} />
             </div>
+            {showReset && (
+              <Button variant="ghost" size="sm" onClick={onReset} className="sm:hidden h-9 px-3 text-xs border text-muted-foreground hover:text-red-600">
+                إعادة البدء
+              </Button>
+            )}
           </div>
         </CardFooter>
       </Card>

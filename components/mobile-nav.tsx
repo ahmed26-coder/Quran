@@ -65,6 +65,13 @@ export function MobileNav() {
               الاختبارات
             </Link>
             <Link
+              href="/prayer-times"
+              className="text-base font-medium transition-colors hover:text-emerald-600"
+              onClick={() => setOpen(false)}
+            >
+              مواقيت الصلاة
+            </Link>
+            <Link
               href="/contact"
               className="text-base font-medium transition-colors hover:text-emerald-600"
               onClick={() => setOpen(false)}
