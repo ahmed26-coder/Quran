@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react"
 import { toPng } from "html-to-image"
-import { Share2, Download, Loader2, Link as LinkIcon } from "lucide-react"
+import { Share2, Loader2, Link as LinkIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Quote } from "lucide-react"
@@ -54,9 +54,9 @@ export function ShareSupplication({ zekr }: ShareSupplicationProps) {
             try {
                 await navigator.share({
                     files: [file],
-                    title: "ذكر من بوابة القرآن",
-                    text: `موقع بوابة القرآن: ${window.location.origin}`,
-                    url: window.location.origin,
+                    title: "بوابة القرآن",
+                    text: `بوابة القرآن: ${window.location.href}`,
+                    url: window.location.href,
                 })
             } catch (err) {
                 if ((err as Error).name !== "AbortError") {
