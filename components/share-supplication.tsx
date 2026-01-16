@@ -55,7 +55,8 @@ export function ShareSupplication({ zekr }: ShareSupplicationProps) {
                 await navigator.share({
                     files: [file],
                     title: "ذكر من بوابة القرآن",
-                    text: `${zekr.zekr}\n\nالمصدر: ${zekr.source || "غير متوفر"}\nاقرأ المزيد على: ${window.location.origin}`,
+                    text: `موقع بوابة القرآن: ${window.location.origin}`,
+                    url: window.location.origin,
                 })
             } catch (err) {
                 if ((err as Error).name !== "AbortError") {
@@ -78,20 +79,22 @@ export function ShareSupplication({ zekr }: ShareSupplicationProps) {
 
     return (
         <>
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={handleShare}
-                disabled={isGenerating}
-                className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/50 dark:hover:bg-emerald-950/30"
-            >
-                {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                    <Share2 className="h-4 w-4" />
-                )}
-                مشاركة
-            </Button>
+            <div className="flex items-center gap-1">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleShare}
+                    disabled={isGenerating}
+                    className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/50 dark:hover:bg-emerald-950/30"
+                >
+                    {isGenerating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <Share2 className="h-4 w-4" />
+                    )}
+                    مشاركة
+                </Button>
+            </div>
 
             {/* Hidden Global Styles for the template to ensure fonts are loaded correctly in image */}
             <style jsx global>{`
