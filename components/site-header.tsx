@@ -31,6 +31,9 @@ export function SiteHeader() {
           <Link href="/supplications" className="text-sm font-medium transition-colors hover:text-emerald-600">
             الأدعية
           </Link>
+          <Link href="/hadith" className="text-sm font-medium transition-colors hover:text-emerald-600">
+            الأحاديث
+          </Link>
           <Link href="/prayer-times" className="text-sm font-medium transition-colors hover:text-emerald-600">
             مواقيت الصلاة
           </Link>
