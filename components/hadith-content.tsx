@@ -32,6 +32,17 @@ const getArabicBookName = (slug: string, fallback: string) => {
     return BOOK_NAMES_AR[slug] || fallback
 }
 
+// Arabic Text Normalization Utility
+const normalizeArabic = (text: string) => {
+    if (!text) return ""
+    return text
+        .replace(/[\u064B-\u0652]/g, "") // Remove Tashkeel (diacritics)
+        .replace(/[أإآ]/g, "ا")             // Normalize Alephs
+        .replace(/ى/g, "ي")               // Normalize Yaa
+        .replace(/ة/g, "ه")               // Normalize Taa Marbuta
+        .trim()
+}
+
 interface Hadith {
     id: number
     hadithArabic: string
@@ -134,7 +145,11 @@ export function HadithContent() {
             if (selectedBook && selectedBook !== "none") params.book = selectedBook
             if (selectedChapter && selectedChapter !== "none") params.chapter = selectedChapter
             if (selectedStatus && selectedStatus !== "none") params.status = selectedStatus
-            if (debouncedSearchQuery) params.hadithArabic = debouncedSearchQuery
+            if (debouncedSearchQuery) {
+                // If the user typed something, we clean it before sending
+                // Note: The API might already handle this, but cleaning Alephs/Yaa helps consistency
+                params.hadithArabic = normalizeArabic(debouncedSearchQuery)
+            }
 
             const data = await fetchFromAPI("hadiths", params)
             const newItems = data.hadiths?.data || []
@@ -317,17 +332,6 @@ export function HadithContent() {
             <section className="container px-4 py-8 mx-auto mb-20">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-4 border-b">
-                        <TabsList className="bg-emerald-50/50 dark:bg-emerald-950/20 p-1 rounded-xl h-auto">
-                            <TabsTrigger value="browse" className="rounded-lg py-2.5 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-emerald-900/50 data-[state=active]:shadow-sm">
-                                <BookOpen className="h-4 w-4 ml-2" />
-                                تصفح الكتب
-                            </TabsTrigger>
-                            <TabsTrigger value="search" className="rounded-lg py-2.5 px-6 data-[state=active]:bg-white dark:data-[state=active]:bg-emerald-900/50 data-[state=active]:shadow-sm">
-                                <Search className="h-4 w-4 ml-2" />
-                                نتائج البحث
-                            </TabsTrigger>
-                        </TabsList>
-
                         {activeTab === "browse" && (
                             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                                 <Select
@@ -386,13 +390,14 @@ export function HadithContent() {
                         )}
                     </div>
 
-                    <TabsContent value="browse" className="relative">
+                    <TabsContent value="browse" className="relative min-h-[400px]">
                         {(loading && browseHadiths.length === 0) ? renderSkeletons() : (
-                            <div className={`grid gap-6 transition-opacity duration-300 ${(isFiltering || loading) ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                            <div className={`grid gap-6 transition-opacity duration-300`}>
                                 {isFiltering && (
-                                    <div className="absolute inset-0 flex items-start justify-center pt-20 z-10">
-                                        <div className="bg-background/80 backdrop-blur-sm p-4 rounded-full shadow-xl border border-emerald-100 dark:border-emerald-800 animate-in fade-in zoom-in duration-300">
-                                            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                                    <div className="absolute top-0 inset-x-0 flex items-start justify-center pt-2 z-10 pointer-events-none">
+                                        <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-emerald-100 dark:border-emerald-800 animate-in fade-in slide-in-from-top-4 duration-300 flex items-center gap-2">
+                                            <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                                            <span className="text-sm font-medium">جاري التحديث...</span>
                                         </div>
                                     </div>
                                 )}
@@ -421,7 +426,15 @@ export function HadithContent() {
                                 <p className="text-muted-foreground mt-2">جرب البحث بكلمات أخرى أو تغيير إعدادات الفلترة</p>
                             </div>
                         ) : (
-                            <div className="grid gap-6">
+                            <div className="grid gap-6 relative min-h-[200px]">
+                                {isFiltering && (
+                                    <div className="absolute top-0 inset-x-0 flex items-start justify-center pt-2 z-10 pointer-events-none">
+                                        <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-emerald-100 dark:border-emerald-800 animate-in fade-in slide-in-from-top-4 duration-300 flex items-center gap-2">
+                                            <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+                                            <span className="text-sm font-medium">جاري البحث...</span>
+                                        </div>
+                                    </div>
+                                )}
                                 {browseHadiths.map((h, i) => renderHadithCard(h, i))}
                                 {browseHadiths.length > 0 && browseHasMore && (
                                     <div className="flex justify-center pt-8">
