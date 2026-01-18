@@ -38,6 +38,150 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import dynamic from "next/dynamic"
+
+// --- Lazy Components ---
+
+const TafseerDialog = dynamic(() => import("./quran/tafseer-dialog"), {
+  loading: () => <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-600" />
+})
+
+const TafseerSheet = dynamic(() => import("./quran/tafseer-sheet"), {
+  loading: () => <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-600" />
+})
+
+// --- Memoized Components ---
+
+const AyahItem = React.memo(({
+  ayah,
+  fontSize,
+  isTafseerMode = false
+}: {
+  ayah: Ayah,
+  fontSize: number,
+  isTafseerMode?: boolean
+}) => {
+  return (
+    <span
+      id={`ayah-${ayah.numberInSurah}`}
+      className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8"
+    >
+      {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
+      <span
+        className="inline-flex items-center justify-center mx-2 align-middle border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold"
+        style={{
+          width: `${fontSize * 1.1}px`,
+          height: `${fontSize * 1.1}px`,
+          fontSize: `${fontSize * 0.45}px`
+        }}
+      >
+        {ayah.numberInSurah}
+      </span>
+    </span>
+  )
+})
+
+AyahItem.displayName = "AyahItem"
+
+const ReaderContent = React.memo(({
+  pageContent,
+  fontSize,
+  currentSurahNum,
+  activeSurah,
+  currentPage,
+  handlePageChange
+}: {
+  pageContent: Ayah[],
+  fontSize: number,
+  currentSurahNum: number,
+  activeSurah: any,
+  currentPage: number,
+  handlePageChange: (page: number) => void
+}) => {
+  const groupedAyahs = useMemo(() => {
+    return Object.entries(
+      pageContent.reduce((acc: Record<number, Ayah[]>, ayah) => {
+        const sNum = (ayah as any).surah?.number || currentSurahNum
+        if (!acc[sNum]) acc[sNum] = []
+        acc[sNum].push(ayah)
+        return acc
+      }, {})
+    )
+  }, [pageContent, currentSurahNum])
+
+  return (
+    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
+      <div
+        className="font-amiri text-justify leading-[2.5] text-emerald-950 dark:text-emerald-50 space-y-8"
+        dir="rtl"
+        style={{ fontSize: `${fontSize}px` }}
+      >
+        {groupedAyahs.map(([sNum, ayahs]) => {
+          const surahInfo = (ayahs[0] as any).surah || activeSurah
+          const showBasmala = parseInt(sNum) !== 1 && parseInt(sNum) !== 9 && ayahs[0].numberInSurah === 1
+
+          return (
+            <div key={sNum} className="space-y-6">
+              <div className="text-center py-4">
+                <h3 className="text-2xl font-bold text-emerald-800 dark:text-emerald-400 font-amiri border-y-2 border-emerald-100 dark:border-emerald-900/30 py-2 inline-block px-8 rounded-full">
+                  سورة {surahInfo.name}
+                </h3>
+              </div>
+
+              {showBasmala && (
+                <div className="text-center py-4">
+                  <p className="font-amiri text-emerald-800 dark:text-emerald-400 opacity-90" style={{ fontSize: `${fontSize * 1.2}px` }}>
+                    بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                  </p>
+                </div>
+              )}
+
+              <div className="max-h-none overflow-visible">
+                {ayahs.map((ayah) => (
+                  <AyahItem key={ayah.number} ayah={ayah} fontSize={fontSize} />
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Page Navigation Controls */}
+      <div className="mt-8 sm:mt-12 flex items-center justify-center gap-3 sm:gap-6">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
+        >
+          <ChevronRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="hidden sm:inline">الصفحة السابقة</span>
+          <span className="sm:hidden">السابقة</span>
+        </Button>
+
+        <div className="flex flex-col items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-800">
+          <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium">الصفحة</span>
+          <span className="text-xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-300">{currentPage}</span>
+        </div>
+
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === 604}
+          className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
+        >
+          <span className="hidden sm:inline">الصفحة التالية</span>
+          <span className="sm:hidden">التالية</span>
+          <ChevronLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+        </Button>
+      </div>
+    </div>
+  )
+})
+
+ReaderContent.displayName = "ReaderContent"
 
 interface Surah {
   number: number
@@ -114,16 +258,29 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     localStorage.setItem("quran-state", JSON.stringify({ surah, page, juz, readerMode: mode, fontSize: size }))
   }, [])
 
+  // --- In-Memory Cache ---
+  const apiCache = React.useRef<Record<string, any>>({})
+
+  const fetchWithCache = useCallback(async (key: string, fetcher: () => Promise<any>) => {
+    if (apiCache.current[key]) return apiCache.current[key]
+    const data = await fetcher()
+    if (data) apiCache.current[key] = data
+    return data
+  }, [])
+
   // --- Data Fetching ---
 
   const fetchSurahData = useCallback(async (num: number) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`https://api.alquran.cloud/v1/surah/${num}`)
-      const data = await res.json()
-      if (data.code === 200) {
-        setSurahContent(data.data.ayahs)
-        return data.data.ayahs
+      const data = await fetchWithCache(`surah-${num}`, async () => {
+        const res = await fetch(`https://api.alquran.cloud/v1/surah/${num}`)
+        const json = await res.json()
+        return json.code === 200 ? json.data.ayahs : null
+      })
+      if (data) {
+        setSurahContent(data)
+        return data
       }
     } catch (error) {
       console.error("Failed to fetch surah", error)
@@ -131,16 +288,19 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       setIsLoading(false)
     }
     return []
-  }, [])
+  }, [fetchWithCache])
 
   const fetchPageData = useCallback(async (page: number) => {
     setIsLoading(true)
     try {
-      const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`)
-      const data = await res.json()
-      if (data.code === 200) {
-        setPageContent(data.data.ayahs)
-        return data.data.ayahs
+      const data = await fetchWithCache(`page-${page}`, async () => {
+        const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`)
+        const json = await res.json()
+        return json.code === 200 ? json.data.ayahs : null
+      })
+      if (data) {
+        setPageContent(data)
+        return data
       }
     } catch (error) {
       console.error("Failed to fetch page content", error)
@@ -148,7 +308,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       setIsLoading(false)
     }
     return []
-  }, [])
+  }, [fetchWithCache])
 
   // --- Actions ---
 
@@ -820,100 +980,14 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
               className="bg-white dark:bg-card border-2 border-emerald-50 dark:border-emerald-950/20 rounded-3xl shadow-sm overflow-hidden min-h-auto cursor-grab active:cursor-grabbing touch-pan-y"
             >
               {readerMode === "text" ? (
-                <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
-                  <div
-                    className="font-amiri text-justify leading-[2.5] text-emerald-950 dark:text-emerald-50 space-y-8"
-                    dir="rtl"
-                    style={{ fontSize: `${fontSize}px` }}
-                  >
-                    {/* Group ayahs by surah in case a page spans multiple surahs */}
-                    {Object.entries(
-                      pageContent.reduce((acc: Record<number, Ayah[]>, ayah) => {
-                        // Assuming ayah object from API has surah info or we can use the juz/page context
-                        // The AlQuran.cloud /page/{page} returns ayahs with surah object
-                        const sNum = (ayah as any).surah?.number || currentSurahNum
-                        if (!acc[sNum]) acc[sNum] = []
-                        acc[sNum].push(ayah)
-                        return acc
-                      }, {})
-                    ).map(([sNum, ayahs]) => {
-                      const surahInfo = (ayahs[0] as any).surah || activeSurah
-                      const showBasmala = parseInt(sNum) !== 1 && parseInt(sNum) !== 9 && ayahs[0].numberInSurah === 1
-
-                      return (
-                        <div key={sNum} className="space-y-6">
-                          <div className="text-center py-4">
-                            <h3 className="text-2xl font-bold text-emerald-800 dark:text-emerald-400 font-amiri border-y-2 border-emerald-100 dark:border-emerald-900/30 py-2 inline-block px-8 rounded-full">
-                              سورة {surahInfo.name}
-                            </h3>
-                          </div>
-
-                          {showBasmala && (
-                            <div className="text-center py-4">
-                              <p className="font-amiri text-emerald-800 dark:text-emerald-400 opacity-90" style={{ fontSize: `${fontSize * 1.2}px` }}>
-                                بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                              </p>
-                            </div>
-                          )}
-
-                          <div className="max-h-none overflow-visible">
-                            {ayahs.map((ayah) => (
-                              <span
-                                key={ayah.number}
-                                id={`ayah-${ayah.numberInSurah}`}
-                                className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8"
-                              >
-                                {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
-                                <span
-                                  className="inline-flex items-center justify-center mx-2 align-middle border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold"
-                                  style={{
-                                    width: `${fontSize * 1.1}px`,
-                                    height: `${fontSize * 1.1}px`,
-                                    fontSize: `${fontSize * 0.45}px`
-                                  }}
-                                >
-                                  {ayah.numberInSurah}
-                                </span>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Page Navigation Controls (Text Mode) */}
-                  <div className="mt-8 sm:mt-12 flex items-center justify-center gap-3 sm:gap-6">
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
-                    >
-                      <ChevronRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                      <span className="hidden sm:inline">الصفحة السابقة</span>
-                      <span className="sm:hidden">السابقة</span>
-                    </Button>
-
-                    <div className="flex flex-col items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border-2 border-emerald-200 dark:border-emerald-800">
-                      <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium">الصفحة</span>
-                      <span className="text-xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-300">{currentPage}</span>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === 604}
-                      className="h-10 sm:h-12 px-4 sm:px-6 text-sm sm:text-base font-semibold bg-white dark:bg-gray-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-md"
-                    >
-                      <span className="hidden sm:inline">الصفحة التالية</span>
-                      <span className="sm:hidden">التالية</span>
-                      <ChevronLeft className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    </Button>
-                  </div>
-                </div>
+                <ReaderContent
+                  pageContent={pageContent}
+                  fontSize={fontSize}
+                  currentSurahNum={currentSurahNum}
+                  activeSurah={activeSurah}
+                  currentPage={currentPage}
+                  handlePageChange={handlePageChange}
+                />
               ) : (
                 <div className="relative w-full h-auto flex flex-col items-center bg-[#fffdf5] dark:bg-[#1a1c1e]/10 py-10 px-4">
                   <div className="relative bg-[#fffdf5] h-auto w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">
@@ -970,99 +1044,24 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
         }
       `}</style>
 
-      {/* Tafseer Selection Dialog */}
-      <Dialog open={isTafseerDialogOpen} onOpenChange={setIsTafseerDialogOpen}>
-        <DialogContent className="w-[95%] px-3 sm:max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">اختر التفسير</DialogTitle>
-            <DialogDescription className="text-center">
-              اختر مصدر التفسير الذي تريد عرضه للصفحة الحالية
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 py-4 max-h-[60vh] overflow-y-auto custom-scrollbar px-1">
-            {availableTafseers.length === 0 ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-600 mb-2" />
-                <p className="text-sm text-muted-foreground">جاري تحميل التفاسير...</p>
-              </div>
-            ) : (
-              availableTafseers.map((tafseer) => (
-                <Button
-                  key={tafseer.id}
-                  variant="outline"
-                  className="h-auto py-4 px-6 justify-start text-right hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-2 hover:border-emerald-300 transition-all"
-                  onClick={() => handleTafseerSelect(tafseer.id)}
-                >
-                  <div className="flex flex-col items-start gap-1 w-full">
-                    <span className="font-bold text-lg">{tafseer.name}</span>
-                    {tafseer.author && (
-                      <span className="text-sm text-muted-foreground">{tafseer.author}</span>
-                    )}
-                  </div>
-                </Button>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TafseerDialog
+        open={isTafseerDialogOpen}
+        onOpenChange={setIsTafseerDialogOpen}
+        availableTafseers={availableTafseers}
+        onSelect={handleTafseerSelect}
+      />
 
-      {/* Tafseer Display Sheet */}
-      <Sheet open={isTafseerSheetOpen} onOpenChange={setIsTafseerSheetOpen}>
-        <SheetContent side="left" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-12 w-12 rounded-full"
-              onClick={() => setIsTafseerSheetOpen(false)}
-            >
-              <X className="h-10 w-10" />
-            </Button>
-            <SheetTitle className="text-2xl font-bold text-center pt-4">
-              {availableTafseers.find(t => t.id === selectedTafseerId)?.name || "التفسير"}
-            </SheetTitle>
-            <SheetDescription className="text-center">
-              {tafseerRange ? (
-                <span className="block mt-1 font-amiri text-lg font-normal text-muted-foreground">
-                  {tafseerRange.surah} • من الآية {tafseerRange.start} إلى {tafseerRange.end}
-                </span>
-              ) : (
-                readerMode === "image" ? `الصفحة ${currentPage}` : `سورة ${activeSurah?.name}`
-              )}
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="mt-6 space-y-6">
-            {isFetchingTafseer ? (
-              <div className="text-center py-12">
-                <Loader2 className="h-12 w-12 animate-spin mx-auto text-emerald-600 mb-4" />
-                <p className="text-emerald-700 font-medium">جاري تحميل التفسير...</p>
-              </div>
-            ) : tafseerData.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">لا يوجد تفسير متاح</p>
-              </div>
-            ) : (
-              tafseerData.map((tafseer, index) => (
-                <Card key={index} className="overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/30">
-                  <CardContent className="p-6 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Badge className="bg-emerald-600 text-white px-3 py-1">
-                        الآية {tafseer.ayah_number}
-                      </Badge>
-                    </div>
-                    <div className="prose prose-lg max-w-none">
-                      <p className="font-amiri text-xl leading-relaxed text-justify" dir="rtl">
-                        {tafseer.text}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <TafseerSheet
+        open={isTafseerSheetOpen}
+        onOpenChange={setIsTafseerSheetOpen}
+        tafseerName={availableTafseers.find(t => t.id === selectedTafseerId)?.name}
+        tafseerRange={tafseerRange}
+        isFetching={isFetchingTafseer}
+        tafseerData={tafseerData}
+        currentPage={currentPage}
+        activeSurahName={activeSurah?.name}
+        readerMode={readerMode}
+      />
     </div>
   )
 }

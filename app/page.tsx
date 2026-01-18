@@ -76,6 +76,7 @@ export default function Home() {
                   alt="مصحف وروحانيات"
                   className="object-cover w-full h-full"
                   priority
+                  sizes="(max-width: 1024px) 100vw, 600px"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute bottom-0 right-0 p-6 text-white">
@@ -477,6 +478,7 @@ export default function Home() {
                     loading="lazy"
                     alt="المجتمع الإسلامي"
                     className="object-cover w-full h-full transition-transform hover:scale-105"
+                    sizes="(max-width: 1024px) 100vw, 500px"
                   />
                 </div>
               </motion.div>
