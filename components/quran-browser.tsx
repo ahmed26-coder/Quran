@@ -803,7 +803,22 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
               </div>
             ) : null}
 
-            <div className="bg-white dark:bg-card border-2 border-emerald-50 dark:border-emerald-950/20 rounded-3xl shadow-sm overflow-hidden min-h-auto">
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={(e, info) => {
+                const threshold = 80 // px
+                if (info.offset.x > threshold) {
+                  // Swipe Right -> Next Page
+                  if (currentPage < 604) handlePageChange(currentPage + 1)
+                } else if (info.offset.x < -threshold) {
+                  // Swipe Left -> Previous Page
+                  if (currentPage > 1) handlePageChange(currentPage - 1)
+                }
+              }}
+              className="bg-white dark:bg-card border-2 border-emerald-50 dark:border-emerald-950/20 rounded-3xl shadow-sm overflow-hidden min-h-auto cursor-grab active:cursor-grabbing touch-pan-y"
+            >
               {readerMode === "text" ? (
                 <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8">
                   <div
@@ -944,7 +959,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           </div>
         </motion.div>
       </AnimatePresence>
