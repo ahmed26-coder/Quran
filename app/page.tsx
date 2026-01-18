@@ -43,7 +43,7 @@ export default function Home() {
               >
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                    استكشف القرآن الكريم والتعاليم الإسلامية
+                    اقرأ القرآن الكريم وتعلّم التعاليم الإسلامية
                   </h1>
                   <p className="max-w-[600px] text-muted-foreground md:text-xl">
                     استمع إلى تلاوات القرآن من شيوخ مشهورين، واقرأ الأدعية، واستكشف القرآن الكريم بواجهة حديثة وجميلة.
@@ -79,7 +79,7 @@ export default function Home() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute bottom-0 right-0 p-6 text-white">
-                  <p className="text-xl font-medium">ابدأ رحلتك الروحانية اليوم</p>
+                  <p className="text-xl font-medium">اجعل القرآن رفيق دربك</p>
                 </div>
               </motion.div>
             </div>
@@ -117,7 +117,7 @@ export default function Home() {
                 <div className="flex flex-col space-y-4">
                   <BookOpen className="h-12 w-12 text-emerald-600" />
                   <div className="space-y-2">
-                    <h3 className="text-xl font-bold">استكشاف القرآن</h3>
+                    <h3 className="text-xl font-bold">اقرأ القرآن</h3>
                     <p className="text-muted-foreground">
                       اقرأ واستمع وادرس القرآن الكريم مع ترجمات متعددة وموارد التفسير.
                     </p>
@@ -125,7 +125,7 @@ export default function Home() {
                 </div>
                 <Link href="/quran">
                   <Button variant="outline" className="w-full">
-                    استكشف القرآن
+                    اقرأ القرآن
                   </Button>
                 </Link>
               </motion.div>

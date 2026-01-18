@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -6,8 +8,12 @@ import Image from "next/image"
 import { MobileNav } from "@/components/mobile-nav"
 import { HijriDate } from "@/components/hijri-date"
 import { GlobalSearchLazy } from "@/components/global-search-lazy"
+import { useAuth } from "@/components/auth-provider"
+import { LogOut, User as UserIcon } from "lucide-react"
+import { avatars } from "@/lib/appwrite"
 
 export function SiteHeader() {
+  const { user, logout } = useAuth()
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -47,10 +53,50 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           <GlobalSearchLazy />
           <ThemeToggle />
-          <Button variant="outline" className="hidden md:flex bg-transparent">
-            تسجيل الدخول
-          </Button>
-          <Button className="hidden md:flex bg-emerald-600 hover:bg-emerald-700">إنشاء حساب</Button>
+          {user ? (
+            <div className="hidden md:flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
+                <div className="h-6 w-6 rounded-full overflow-hidden border border-emerald-200 dark:border-emerald-800 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  {(user.prefs as any)?.image || (user.prefs as any)?.avatar ? (
+                    <Image
+                      src={(user.prefs as any).image || (user.prefs as any).avatar}
+                      alt={user.name}
+                      width={24}
+                      height={24}
+                      className="object-cover w-full h-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <Image
+                      src={avatars.getInitials(user.name).toString()}
+                      alt={user.name}
+                      width={24}
+                      height={24}
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <span className="text-sm font-medium max-w-[100px] truncate">{user.name}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Button variant="outline" className="hidden md:flex bg-transparent" asChild>
+                <Link href="/auth/login">تسجيل الدخول</Link>
+              </Button>
+              <Button className="hidden md:flex bg-emerald-600 hover:bg-emerald-700" asChild>
+                <Link href="/auth/signup">إنشاء حساب</Link>
+              </Button>
+            </>
+          )}
           <MobileNav />
         </div>
       </div>
