@@ -46,16 +46,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loginWithGoogle = () => {
         account.createOAuth2Session(
             OAuthProvider.Google,
-            window.location.origin,
-            `${window.location.origin}/auth/login`
+            'https://quranee.netlify.app/v1/account/sessions/oauth2/callback', // successUrl
+            'https://quranee.netlify.app/auth/login'
         );
     };
 
     const loginWithFacebook = () => {
         account.createOAuth2Session(
             OAuthProvider.Facebook,
-            window.location.origin,
-            `${window.location.origin}/auth/login`
+            'https://quranee.netlify.app/v1/account/sessions/oauth2/callback', // successUrl
+            'https://quranee.netlify.app/auth/login'
         );
     };
 
