@@ -83,33 +83,35 @@ export default function SheikhsPage() {
               <div className="text-center text-muted-foreground">جاري تحميل البيانات...</div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-  {filteredSheikhs.map((sheikh) => (
-    <Link href={`/sheikhs/${sheikh.id}`} key={sheikh.id} className="group">
-      <div className="flex flex-col space-y-4 rounded-lg group-hover:border-emerald-400 border bg-background p-6 shadow-sm transition-all hover:shadow-md">
-        {/* Avatar بالنص */}
-        <div className="relative h-48 w-48 mx-auto flex items-center justify-center rounded-full border-4 border-emerald-50 shadow-xl group-hover:border-emerald-200 transition-all duration-300 bg-emerald-100 text-4xl font-bold text-emerald-700">
-          {sheikh.name
-            ? sheikh.name
-                .split(" ")
-                .map((word: any[]) => word[0])
-                .slice(0, 2)
-                .join("")
-                .toUpperCase()
-            : "قارئ"}
-        </div>
+                {filteredSheikhs.map((sheikh) => (
+                  <Link href={`/sheikhs/${sheikh.id}`} key={sheikh.id} className="group">
+                    <div className="flex flex-col space-y-4 rounded-lg group-hover:border-emerald-400 border bg-background p-6 shadow-sm transition-all hover:shadow-md">
+                      {/* Avatar بالنص */}
+                      <div className="relative h-48 w-48 mx-auto flex items-center justify-center rounded-full border-4 border-emerald-50 shadow-xl group-hover:border-emerald-200 transition-all duration-300 bg-emerald-100 text-4xl font-bold text-emerald-700">
+                        {sheikh.name
+                          ? sheikh.name
+                            .split(" ")
+                            .map((word: any[]) => word[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase()
+                          : "قارئ"}
+                      </div>
 
-        <div className="space-y-2 text-center">
-          <h3 className="text-xl font-bold group-hover:text-emerald-600">{sheikh.name}</h3>
-          <p className="text-sm">قارئ قرآن كريم</p>
-        </div>
+                      <div className="space-y-2 text-center">
+                        <h3 className="text-xl font-bold group-hover:text-emerald-600">{sheikh.name}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-1">
+                          {sheikh.moshaf?.[0]?.name || "قارئ قرآن كريم"}
+                        </p>
+                      </div>
 
-        <Button variant="ghost" className="mt-auto group-hover:text-emerald-600">
-          عرض الملف الشخصي <ChevronLeft className="mr-2 h-4 w-4" />
-        </Button>
-      </div>
-    </Link>
-  ))}
-</div>
+                      <Button variant="ghost" className="mt-auto group-hover:text-emerald-600">
+                        عرض الملف الشخصي <ChevronLeft className="mr-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Link>
+                ))}
+              </div>
 
             )}
           </div>

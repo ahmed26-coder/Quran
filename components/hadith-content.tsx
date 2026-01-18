@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, BookOpen, ChevronDown, Copy, Loader2, RefreshCcw } from "lucide-react"
+import { Search, BookOpen, ChevronDown, Copy, Loader2, RefreshCcw, X } from "lucide-react"
 import { toast } from "sonner"
 import { ShareHadith } from "./share-hadith"
 
@@ -67,12 +67,12 @@ export function HadithContent() {
     const [books, setBooks] = useState<Book[]>([])
     const [chapters, setChapters] = useState<Chapter[]>([])
 
-    // Separate states for Browse vs Search
+    // Unified state for both Browse & Search
     const [browseHadiths, setBrowseHadiths] = useState<Hadith[]>([])
-    const [searchHadiths, setSearchHadiths] = useState<Hadith[]>([])
 
     const [activeTab, setActiveTab] = useState("browse")
     const [loading, setLoading] = useState(true)
+    const [isFiltering, setIsFiltering] = useState(false)
     const [loadingMore, setLoadingMore] = useState(false)
     const [expandedHadith, setExpandedHadith] = useState<number | null>(null)
 
@@ -81,12 +81,11 @@ export function HadithContent() {
     const [selectedChapter, setSelectedChapter] = useState("")
     const [selectedStatus, setSelectedStatus] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("")
 
     // Pagination
     const [browsePage, setBrowsePage] = useState(1)
-    const [searchPage, setSearchPage] = useState(1)
     const [browseHasMore, setBrowseHasMore] = useState(true)
-    const [searchHasMore, setSearchHasMore] = useState(true)
 
     // --- API Helpers ---
     const fetchFromAPI = useCallback(async (endpoint: string, params: Record<string, string | number> = {}) => {
@@ -121,7 +120,10 @@ export function HadithContent() {
     }
 
     const loadHadiths = async (isLoadMore = false) => {
-        if (!isLoadMore) setLoading(true)
+        if (!isLoadMore) {
+            if (browseHadiths.length === 0) setLoading(true)
+            else setIsFiltering(true)
+        }
         else setLoadingMore(true)
 
         try {
@@ -129,9 +131,10 @@ export function HadithContent() {
                 paginate: 15,
                 page: isLoadMore ? browsePage + 1 : 1
             }
-            if (selectedBook) params.book = selectedBook
-            if (selectedChapter) params.chapter = selectedChapter
-            if (selectedStatus) params.status = selectedStatus
+            if (selectedBook && selectedBook !== "none") params.book = selectedBook
+            if (selectedChapter && selectedChapter !== "none") params.chapter = selectedChapter
+            if (selectedStatus && selectedStatus !== "none") params.status = selectedStatus
+            if (debouncedSearchQuery) params.hadithArabic = debouncedSearchQuery
 
             const data = await fetchFromAPI("hadiths", params)
             const newItems = data.hadiths?.data || []
@@ -150,56 +153,35 @@ export function HadithContent() {
             toast.error("خطأ في جلب الأحاديث")
         } finally {
             setLoading(false)
+            setIsFiltering(false)
             setLoadingMore(false)
         }
     }
 
-    const searchHadithsAction = async (isLoadMore = false) => {
-        if (!searchQuery.trim()) return
-
-        if (!isLoadMore) setLoading(true)
-        else setLoadingMore(true)
-
-        try {
-            const params = {
-                hadithArabic: searchQuery,
-                paginate: 15,
-                page: isLoadMore ? searchPage + 1 : 1
-            }
-            const data = await fetchFromAPI("hadiths", params)
-            const newItems = data.hadiths?.data || []
-
-            if (isLoadMore) {
-                setSearchHadiths(prev => [...prev, ...newItems])
-                setSearchPage(prev => prev + 1)
-            } else {
-                setSearchHadiths(newItems)
-                setSearchPage(1)
-            }
-
-            setSearchHasMore(!!data.hadiths?.next_page_url)
-        } catch (error) {
-            toast.error("خطأ أثناء البحث")
-        } finally {
-            setLoading(false)
-            setLoadingMore(false)
-        }
-    }
 
     // --- Effects ---
     useEffect(() => { loadBooks() }, [])
 
+    // Debounce search query
     useEffect(() => {
-        if (selectedBook) {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery)
+        }, 600)
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
+    useEffect(() => {
+        if (selectedBook && selectedBook !== "none") {
             loadChapters(selectedBook)
-            setBrowseHadiths([]) // Clear current to show loading
-            loadHadiths()
+        } else {
+            setChapters([])
         }
-    }, [selectedBook, selectedChapter, selectedStatus])
+        loadHadiths()
+    }, [selectedBook, selectedChapter, selectedStatus, debouncedSearchQuery])
 
     // Initial load for browse
     useEffect(() => {
-        if (activeTab === "browse" && browseHadiths.length === 0 && !selectedBook) {
+        if (activeTab === "browse" && browseHadiths.length === 0 && !selectedBook && !debouncedSearchQuery) {
             loadHadiths()
         }
     }, [activeTab])
@@ -310,18 +292,21 @@ export function HadithContent() {
                                 <Search className="absolute right-4 h-5 w-5 text-emerald-500" />
                                 <Input
                                     type="text"
-                                    placeholder="ابحث بالنص العربي للحديث..."
+                                    placeholder="ابحث بالنص العربي للحديث (مثال: إنما الأعمال)..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && searchHadithsAction()}
                                     className="w-full h-14 border-0 pr-12 text-lg focus-visible:ring-0 rounded-xl"
                                 />
-                                <Button
-                                    onClick={() => { setActiveTab("search"); searchHadithsAction(); }}
-                                    className="ml-2 mr-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-10 px-6"
-                                >
-                                    بحث
-                                </Button>
+                                {searchQuery && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setSearchQuery("")}
+                                        className="h-8 w-8 ml-2 text-muted-foreground hover:text-emerald-600"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </motion.div>
@@ -401,9 +386,16 @@ export function HadithContent() {
                         )}
                     </div>
 
-                    <TabsContent value="browse">
-                        {loading ? renderSkeletons() : (
-                            <div className="grid gap-6">
+                    <TabsContent value="browse" className="relative">
+                        {(loading && browseHadiths.length === 0) ? renderSkeletons() : (
+                            <div className={`grid gap-6 transition-opacity duration-300 ${(isFiltering || loading) ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                                {isFiltering && (
+                                    <div className="absolute inset-0 flex items-start justify-center pt-20 z-10">
+                                        <div className="bg-background/80 backdrop-blur-sm p-4 rounded-full shadow-xl border border-emerald-100 dark:border-emerald-800 animate-in fade-in zoom-in duration-300">
+                                            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                                        </div>
+                                    </div>
+                                )}
                                 {browseHadiths.map((h, i) => renderHadithCard(h, i))}
                                 {browseHadiths.length > 0 && browseHasMore && (
                                     <div className="flex justify-center pt-8">
@@ -422,32 +414,32 @@ export function HadithContent() {
                     </TabsContent>
 
                     <TabsContent value="search">
-                        {searchQuery && !loading && searchHadiths.length === 0 ? (
-                            <div className="text-center py-20 bg-slate-50/50 dark:bg-slate-900/20 rounded-3xl border border-dashed text-foreground">
+                        {debouncedSearchQuery && !loading && browseHadiths.length === 0 ? (
+                            <div className="text-center py-20 bg-emerald-50/20 dark:bg-emerald-950/20 rounded-3xl border border-dashed border-emerald-200 dark:border-emerald-800 text-foreground">
                                 <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-                                <h3 className="text-xl font-bold">عذراً، لم نجد نتائج</h3>
-                                <p className="text-muted-foreground mt-2">جرب البحث بكلمات أخرى أو اختر كتاباً محدداً</p>
+                                <h3 className="text-xl font-bold">عذراً، لم نجد نتائج للبحث</h3>
+                                <p className="text-muted-foreground mt-2">جرب البحث بكلمات أخرى أو تغيير إعدادات الفلترة</p>
                             </div>
-                        ) : loading ? renderSkeletons() : (
+                        ) : (
                             <div className="grid gap-6">
-                                {searchHadiths.map((h, i) => renderHadithCard(h, i))}
-                                {searchHadiths.length > 0 && searchHasMore && (
+                                {browseHadiths.map((h, i) => renderHadithCard(h, i))}
+                                {browseHadiths.length > 0 && browseHasMore && (
                                     <div className="flex justify-center pt-8">
                                         <Button
-                                            onClick={() => searchHadithsAction(true)}
+                                            onClick={() => loadHadiths(true)}
                                             disabled={loadingMore}
                                             className="rounded-full px-12 h-12 bg-white dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 border transition-all shadow-sm"
                                         >
                                             {loadingMore ? <Loader2 className="h-4 w-4 animate-spin ml-2" /> : <RefreshCcw className="h-4 w-4 ml-2" />}
-                                            تحميل المزيد من النتائج
+                                            عرض المزيد من النتائج
                                         </Button>
                                     </div>
                                 )}
                             </div>
                         )}
-                        {!searchQuery && (
+                        {!debouncedSearchQuery && (
                             <div className="text-center py-20">
-                                <p className="text-muted-foreground">ابدأ بالبحث عن حديث لعرض النتائج هنا</p>
+                                <p className="text-muted-foreground italic">اكتب أي كلمة للبحث في الأحاديث...</p>
                             </div>
                         )}
                     </TabsContent>
