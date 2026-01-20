@@ -232,104 +232,126 @@ export function ShareAyah({ ayah, surah, trigger }: ShareAyahProps) {
                 </DialogContent>
             </Dialog>
 
-            {/* Hidden template for image generation - MATCHING REFERENCE DESIGN */}
-            <div className="fixed -left-[9999px] top-0">
-                <div
-                    ref={templateRef}
-                    className="w-[680px] h-auto bg-[#f9f5ef] flex flex-col"
-                    dir="rtl"
-                    style={{ fontFamily: "Amiri, serif" }}
+{/* Hidden template for image generation - MATCHING REFERENCE DESIGN */}
+<div className="fixed -left-[9999px] top-0">
+    <div
+        ref={templateRef}
+        className="w-[680px] h-auto flex flex-col"
+        dir="rtl"
+        style={{
+            fontFamily: "Amiri, serif",
+            backgroundColor: "#ffffff",
+            backgroundImage: `
+              radial-gradient(circle at top right, #f0fdf4 0%, transparent 45%),
+              radial-gradient(circle at bottom left, #ecfdf5 0%, transparent 45%)
+            `,
+        }}
+    >
+        {/* ===== Top Decorative Surah Banner ===== */}
+        <div className="px-6 pt-8">
+            <svg viewBox="0 0 560 90" className="w-full h-[90px]">
+                {/* Outer frame */}
+                <rect
+                    x="10"
+                    y="15"
+                    width="540"
+                    height="60"
+                    rx="10"
+                    fill="none"
+                    stroke="#6ee7b7"
+                    strokeWidth="2"
+                />
+
+                {/* Inner frame */}
+                <rect
+                    x="25"
+                    y="25"
+                    width="510"
+                    height="40"
+                    rx="6"
+                    fill="none"
+                    stroke="#a7f3d0"
+                    strokeWidth="1.2"
+                />
+
+                {/* Left ornament */}
+                <g transform="translate(60,45)">
+                    <circle r="10" fill="none" stroke="#059669" strokeWidth="1.5" />
+                    <circle r="4" fill="#059669" />
+                </g>
+
+                {/* Right ornament */}
+                <g transform="translate(500,45)">
+                    <circle r="10" fill="none" stroke="#059669" strokeWidth="1.5" />
+                    <circle r="4" fill="#059669" />
+                </g>
+
+                {/* Surah name */}
+                <text
+                    x="280"
+                    y="52"
+                    textAnchor="middle"
+                    fontSize="30"
+                    fill="#022c22"
+                    fontWeight="bold"
                 >
-                    {/* ===== Top Decorative Surah Banner ===== */}
-                    <div className="px-6 pt-8">
-                        <svg viewBox="0 0 560 90" className="w-full h-[90px]">
-                            {/* Outer frame */}
-                            <rect
-                                x="10"
-                                y="15"
-                                width="540"
-                                height="60"
-                                rx="10"
-                                fill="none"
-                                stroke="#8b5e34"
-                                strokeWidth="2"
-                            />
+                    {surah.name}
+                </text>
+            </svg>
+        </div>
 
-                            {/* Inner frame */}
-                            <rect
-                                x="25"
-                                y="25"
-                                width="510"
-                                height="40"
-                                rx="6"
-                                fill="none"
-                                stroke="#8b5e34"
-                                strokeWidth="1.2"
-                            />
+        {/* ===== Basmala ===== */}
+        <div className="mt-3 text-center">
+            <p
+                className="text-[34px] tracking-wide"
+                style={{
+                    color: "#047857",
+                    fontWeight: 400,
+                }}
+            >
+                ﷽
+            </p>
+        </div>
 
-                            {/* Left ornament */}
-                            <g transform="translate(60,45)">
-                                <circle r="10" fill="none" stroke="#8b5e34" strokeWidth="1.5" />
-                                <circle r="4" fill="#8b5e34" />
-                            </g>
+        {/* ===== Ayah Text ===== */}
+        <div className="flex items-center justify-center px-8 mt-6">
+            <div
+                className="text-center leading-[1.55] text-[42px]"
+                style={{ color: "#022c22" }}
+            >
+                {cleanAyahText}
 
-                            {/* Right ornament */}
-                            <g transform="translate(500,45)">
-                                <circle r="10" fill="none" stroke="#8b5e34" strokeWidth="1.5" />
-                                <circle r="4" fill="#8b5e34" />
-                            </g>
-
-                            {/* Surah name */}
-                            <text
-                                x="280"
-                                y="52"
-                                textAnchor="middle"
-                                fontSize="30"
-                                fill="#3f2a1d"
-                                fontWeight="bold"
-                            >
-                                {surah.name}
-                            </text>
-                        </svg>
-                    </div>
-
-                    {/* ===== Basmala ===== */}
-                    <div className="mt-3 text-center">
-                        <p
-                            className="text-[34px] tracking-wide"
-                            style={{ color: "#a67c52", fontWeight: 400 }}
-                        >
-                            ﷽
-                        </p>
-                    </div>
-
-                    {/* ===== Ayah Text ===== */}
-                    <div className=" flex items-center justify-center px-8 mt-6">
-                        <div className="text-center leading-[1.5] text-[42px] text-[#2b1e14]">
-                            {cleanAyahText}
-
-                            <div className="relative inline-flex items-center justify-center ms-3 align-middle">
-                                <span className="text-[32px] text-[#8b5e34] leading-none">
-                                    ۝
-                                </span>
-                                <span
-                                    className="absolute text-[16px] font-bold text-[#8b5e34]"
-                                    style={{ top: "50%", transform: "translateY(-45%)" }}
-                                >
-                                    {ayah.numberInSurah}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    {/* ===== Footer ===== */}
-                    <div className="pb-6 mt-2 text-center text-[13px] text-[#8b5e34] opacity-80">
-                        الجزء {ayah.juz} • الصفحة {ayah.page}
-                    </div>
+                <div className="relative inline-flex items-center justify-center ms-3 align-middle">
+                    <span
+                        className="text-[32px] leading-none"
+                        style={{ color: "#059669" }}
+                    >
+                        ۝
+                    </span>
+                    <span
+                        className="absolute text-[16px] font-bold"
+                        style={{
+                            color: "#065f46",
+                            top: "50%",
+                            transform: "translateY(-45%)",
+                        }}
+                    >
+                        {ayah.numberInSurah}
+                    </span>
                 </div>
             </div>
+        </div>
+
+        {/* ===== Footer ===== */}
+        <div
+            className="pb-6 mt-3 text-center text-sm"
+            style={{ color: "#064e3b", opacity: 0.8 }}
+        >
+            الجزء {ayah.juz} • الصفحة {ayah.page}
+        </div>
+    </div>
+</div>
+
 
         </>
     )
