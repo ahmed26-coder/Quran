@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         account.createOAuth2Session(
             OAuthProvider.Facebook,
             'https://quranee.netlify.app', // ✅ successUrl
-            'https://quranee.netlify.app/auth/login' // ✅ failureUrl
+            'https://quranee.netlify.app/auth/login'  // ✅ failureUrl
         );
     };
 

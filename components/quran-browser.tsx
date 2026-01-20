@@ -39,6 +39,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import dynamic from "next/dynamic"
+import { ShareAyah } from "./share-ayah"
 
 // --- Lazy Components ---
 
@@ -55,29 +56,60 @@ const TafseerSheet = dynamic(() => import("./quran/tafseer-sheet"), {
 const AyahItem = React.memo(({
   ayah,
   fontSize,
+  surah,
+  onAyahClick,
   isTafseerMode = false
 }: {
   ayah: Ayah,
   fontSize: number,
+  surah?: Surah,
+  onAyahClick?: (ayah: Ayah) => void,
   isTafseerMode?: boolean
 }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
+
+  const handleAyahClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onAyahClick) {
+      onAyahClick(ayah)
+    }
+    setIsPopoverOpen(true)
+  }
+
   return (
-    <span
-      id={`ayah-${ayah.numberInSurah}`}
-      className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8"
-    >
-      {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
-      <span
-        className="inline-flex items-center justify-center mx-2 align-middle border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold"
-        style={{
-          width: `${fontSize * 1.1}px`,
-          height: `${fontSize * 1.1}px`,
-          fontSize: `${fontSize * 0.45}px`
-        }}
+    <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+      <PopoverTrigger asChild>
+        <span
+          id={`ayah-${ayah.numberInSurah}`}
+          className="inline group hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-lg px-1 transition-all cursor-pointer decoration-emerald-200/50 underline-offset-8 relative"
+          onClick={handleAyahClick}
+        >
+          {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
+          <span
+            className="inline-flex items-center justify-center mx-2 align-middle border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold"
+            style={{
+              width: `${fontSize * 1.1}px`,
+              height: `${fontSize * 1.1}px`,
+              fontSize: `${fontSize * 0.45}px`
+            }}
+          >
+            {ayah.numberInSurah}
+          </span>
+        </span>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto p-2 bg-white dark:bg-gray-900 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-xl"
+        align="start"
+        side="bottom"
+        sideOffset={8}
       >
-        {ayah.numberInSurah}
-      </span>
-    </span>
+        {surah && (
+          <div className="flex flex-col gap-1">
+            <ShareAyah ayah={ayah} surah={surah} />
+          </div>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 })
 
@@ -89,14 +121,18 @@ const ReaderContent = React.memo(({
   currentSurahNum,
   activeSurah,
   currentPage,
-  handlePageChange
+  handlePageChange,
+  surahs,
+  onAyahClick
 }: {
   pageContent: Ayah[],
   fontSize: number,
   currentSurahNum: number,
   activeSurah: any,
   currentPage: number,
-  handlePageChange: (page: number) => void
+  handlePageChange: (page: number) => void,
+  surahs: Surah[],
+  onAyahClick?: (ayah: Ayah) => void
 }) => {
   const groupedAyahs = useMemo(() => {
     return Object.entries(
@@ -138,7 +174,13 @@ const ReaderContent = React.memo(({
 
               <div className="max-h-none overflow-visible">
                 {ayahs.map((ayah) => (
-                  <AyahItem key={ayah.number} ayah={ayah} fontSize={fontSize} />
+                  <AyahItem
+                    key={ayah.number}
+                    ayah={ayah}
+                    fontSize={fontSize}
+                    surah={surahInfo}
+                    onAyahClick={onAyahClick}
+                  />
                 ))}
               </div>
             </div>
@@ -986,8 +1028,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                   currentSurahNum={currentSurahNum}
                   activeSurah={activeSurah}
                   currentPage={currentPage}
-                  handlePageChange={handlePageChange}
-                />
+                  handlePageChange={handlePageChange} surahs={[]} />
               ) : (
                 <div className="relative w-full h-auto flex flex-col items-center bg-[#fffdf5] dark:bg-[#1a1c1e]/10 py-10 px-4">
                   <div className="relative bg-[#fffdf5] h-auto w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">
