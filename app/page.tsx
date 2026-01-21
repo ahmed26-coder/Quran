@@ -311,7 +311,7 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto grid max-w-5xl gap-8 py-12 md:grid-cols-2">
+            <div className="mx-auto grid max-w-5xl gap-4 py-12 md:grid-cols-2">
               <div className="flex flex-col space-y-4">
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30">

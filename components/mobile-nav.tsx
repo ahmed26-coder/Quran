@@ -4,10 +4,19 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
-import { Menu, X, LogOut } from "lucide-react"
+import { Menu, X, LogOut, User as UserIcon } from "lucide-react"
 import Image from "next/image"
 import { useAuth } from "@/components/auth-provider"
 import { avatars } from "@/lib/appwrite"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function MobileNav() {
   const [open, setOpen] = useState(false)
@@ -91,44 +100,69 @@ export function MobileNav() {
           </nav>
           <div className="flex flex-col gap-4 pt-6 border-t mt-auto">
             {user ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
-                  <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                    {(user.prefs as any)?.image || (user.prefs as any)?.avatar ? (
-                      <Image
-                        src={(user.prefs as any).image || (user.prefs as any).avatar}
-                        alt={user.name}
-                        width={40}
-                        height={40}
-                        className="object-cover w-full h-full"
-                        unoptimized
-                      />
-                    ) : (
-                      <Image
-                        src={avatars.getInitials(user.name).toString()}
-                        alt={user.name}
-                        width={40}
-                        height={40}
-                        className="object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold truncate">{user.name}</span>
-                    <span className="text-xs opacity-70 truncate">{user.email}</span>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                  onClick={() => {
-                    logout();
-                    setOpen(false);
-                  }}
-                >
-                  <LogOut className="h-4 w-4" />
-                  تسجيل الخروج
-                </Button>
+              <div className="flex items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-14 w-full justify-start rounded-xl p-0 px-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/10">
+                      <div className="flex items-center bg-emerald-50 dark:bg-emerald-900/10 py-1 px-2 rounded-md gap-3 w-full">
+                        <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                          {(user.prefs as any)?.image || (user.prefs as any)?.avatar ? (
+                            <Image
+                              src={(user.prefs as any).image || (user.prefs as any).avatar}
+                              alt={user.name}
+                              width={40}
+                              height={40}
+                              className="object-cover w-full h-full"
+                              unoptimized
+                            />
+                          ) : (
+                            <Image
+                              src={avatars.getInitials(user.name).toString()}
+                              alt={user.name}
+                              width={40}
+                              height={40}
+                              className="object-cover"
+                            />
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 truncate max-w-[150px]">{user.name}</span>
+                          <span className="text-xs text-emerald-600 dark:text-emerald-400 truncate max-w-[180px]">{user.email}</span>
+                        </div>
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64 left-0" align="end" forceMount>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem className="cursor-pointer" asChild onClick={() => setOpen(false)}>
+                        <Link href="/profile" className="flex items-center cursor-pointer">
+                          <UserIcon className="ml-2 h-4 w-4" />
+                          <span>الملف الشخصي</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        logout();
+                        setOpen(false);
+                      }}
+                      className="text-red-600 focus:text-red-600 cursor-pointer"
+                    >
+                      <LogOut className="ml-2 h-4 w-4" />
+                      <span>تسجيل الخروج</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <div className="flex flex-col gap-2">

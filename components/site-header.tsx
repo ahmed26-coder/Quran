@@ -11,6 +11,16 @@ import { GlobalSearchLazy } from "@/components/global-search-lazy"
 import { useAuth } from "@/components/auth-provider"
 import { LogOut, User as UserIcon } from "lucide-react"
 import { avatars } from "@/lib/appwrite"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function SiteHeader() {
   const { user, logout } = useAuth()
@@ -55,37 +65,58 @@ export function SiteHeader() {
           <ThemeToggle />
           {user ? (
             <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
-                <div className="h-6 w-6 rounded-full overflow-hidden border border-emerald-200 dark:border-emerald-800 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  {(user.prefs as any)?.image || (user.prefs as any)?.avatar ? (
-                    <Image
-                      src={(user.prefs as any).image || (user.prefs as any).avatar}
-                      alt={user.name}
-                      width={24}
-                      height={24}
-                      className="object-cover w-full h-full"
-                      unoptimized
-                    />
-                  ) : (
-                    <Image
-                      src={avatars.getInitials(user.name).toString()}
-                      alt={user.name}
-                      width={24}
-                      height={24}
-                      className="object-cover"
-                    />
-                  )}
-                </div>
-                <span className="text-sm font-medium max-w-[100px] truncate">{user.name}</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-18 w-full rounded-full p-0 px-2 hover:bg-transparent">
+                    <div className=" border-2 border-emerald-600 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
+                      <div className="h-12 w-12 rounded-full overflow-hidden border border-emerald-200 dark:border-emerald-800 bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                        {(user.prefs as any)?.image || (user.prefs as any)?.avatar ? (
+                          <Image
+                            src={(user.prefs as any).image || (user.prefs as any).avatar}
+                            alt={user.name}
+                            width={26}
+                            height={26}
+                            className="object-cover w-full h-full"
+                            unoptimized
+                          />
+                        ) : (
+                          <Image
+                            src={avatars.getInitials(user.name).toString()}
+                            alt={user.name}
+                            width={24}
+                            height={24}
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="start" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-[16px] font-medium leading-none">{user.name}</p>
+                      <p className="text-[14px] leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="cursor-pointer" asChild>
+                      <Link href="/profile" className="flex items-center cursor-pointer">
+                        <UserIcon className="ml-2 h-4 w-4" />
+                        <span>الملف الشخصي</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600 cursor-pointer">
+                    <LogOut className="ml-2 h-4 w-4" />
+                    <span>تسجيل الخروج</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <>

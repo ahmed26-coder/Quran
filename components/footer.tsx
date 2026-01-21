@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "./ui/button";
 import { Moon } from "lucide-react";
 import Image from "next/image";
+import NewsletterForm from "./form-submission";
 
 export function Footer() {
     return (
@@ -128,18 +129,12 @@ export function Footer() {
                     </div>
                     <div className="space-y-4">
                         <h3 className="text-lg font-medium">اشترك</h3>
-                        <form className="space-y-2">
-                            <input
-                                type="email"
-                                placeholder="أدخل بريدك الإلكتروني"
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            />
-                            <Button className="w-full bg-emerald-600 hover:bg-emerald-700">اشترك</Button>
-                        </form>
+                        <NewsletterForm />
                         <p className="text-xs text-muted-foreground">احصل على تحديثات حول الميزات والمحتوى الجديد.</p>
                     </div>
                 </div>
             </div>
+            
             <div className="border-t">
                 <div className="container flex flex-col gap-2 py-4 md:flex-row md:items-center md:justify-between md:py-6">
                     <p className="text-center text-sm text-muted-foreground md:text-right">

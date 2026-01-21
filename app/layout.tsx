@@ -6,6 +6,7 @@ import { AuthProvider } from "@/components/auth-provider"
 import { PersistentAudioPlayer } from "@/components/persistent-audio-player"
 import { Tajawal, Amiri } from "next/font/google"
 import { Footer } from "@/components/footer"
+import { Toaster } from "@/components/ui/sonner"
 
 const tajawal = Tajawal({
   subsets: ["arabic"],
@@ -100,6 +101,7 @@ export default function RootLayout({
               {children}
               <Footer />
               <PersistentAudioPlayer />
+              <Toaster />
             </AudioPlayerProvider>
           </AuthProvider>
         </ThemeProvider>

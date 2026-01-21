@@ -22,6 +22,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const refreshUser = async () => {
         try {
             const currentUser = await account.get();
+
+            // Check if avatar is missing in preferences
+            if (currentUser && (!currentUser.prefs?.avatar && !currentUser.prefs?.image)) {
+                try {
+                    const session = await account.getSession('current');
+                    let avatarUrl = '';
+
+                    if (session.provider === 'google') {
+                        try {
+                            const res = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${session.providerAccessToken}`);
+                            const data = await res.json();
+                            if (data.picture) {
+                                avatarUrl = data.picture;
+                            }
+                        } catch (e) {
+                            console.error("Error fetching Google avatar:", e);
+                        }
+                    } else if (session.provider === 'facebook') {
+                        try {
+                            const res = await fetch(`https://graph.facebook.com/me/picture?type=large&redirect=false&access_token=${session.providerAccessToken}`);
+                            const data = await res.json();
+                            if (data.data?.url) {
+                                avatarUrl = data.data.url;
+                            }
+                        } catch (e) {
+                            console.error("Error fetching Facebook avatar:", e);
+                        }
+                    }
+
+                    if (avatarUrl) {
+                        try {
+                            const updatedUser = await account.updatePrefs({
+                                ...currentUser.prefs,
+                                avatar: avatarUrl
+                            });
+                            setUser(updatedUser);
+                            setIsLoading(false);
+                            return;
+                        } catch (e) {
+                            console.error("Error updating prefs with avatar:", e);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error getting session or fetching avatar:", e);
+                }
+            }
+
             setUser(currentUser);
         } catch (error) {
             setUser(null);

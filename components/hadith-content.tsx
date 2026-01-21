@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useTransition } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, BookOpen, ChevronDown, Copy, Loader2, RefreshCcw, X } from "lucide-react"
 import { toast } from "sonner"
 import { ShareHadith } from "./share-hadith"
+import { HadithCard, Hadith } from "./hadith-card"
 
 const API_KEY = "$2y$10$IOGpW6bsmPsFE46DIkmqeS1bNCKmOVlk0Jd9ts8BX2EhGJ7fI8"
 const API_BASE_URL = "https://www.hadithapi.com/public/api"
@@ -43,23 +44,7 @@ const normalizeArabic = (text: string) => {
         .trim()
 }
 
-interface Hadith {
-    id: number
-    hadithArabic: string
-    hadithEnglish?: string
-    hadithNumber: string
-    bookSlug: string
-    status: string
-    book?: {
-        bookName: string
-        bookSlug: string
-    }
-    chapter?: {
-        chapterNumber: string
-        chapterArabic: string
-    }
-    chapterName?: string
-}
+
 
 interface Book {
     bookSlug: string
@@ -83,9 +68,9 @@ export function HadithContent() {
 
     const [activeTab, setActiveTab] = useState("browse")
     const [loading, setLoading] = useState(true)
-    const [isFiltering, setIsFiltering] = useState(false)
     const [loadingMore, setLoadingMore] = useState(false)
     const [expandedHadith, setExpandedHadith] = useState<number | null>(null)
+    const [isPending, startTransition] = useTransition()
 
     // Filters
     const [selectedBook, setSelectedBook] = useState("")
@@ -131,11 +116,12 @@ export function HadithContent() {
     }
 
     const loadHadiths = async (isLoadMore = false) => {
-        if (!isLoadMore) {
-            if (browseHadiths.length === 0) setLoading(true)
-            else setIsFiltering(true)
+        // Only show full loading state if we have NO data to show
+        if (!isLoadMore && browseHadiths.length === 0) {
+            setLoading(true)
         }
-        else setLoadingMore(true)
+
+        if (isLoadMore) setLoadingMore(true)
 
         try {
             const params: Record<string, string | number> = {
@@ -146,29 +132,28 @@ export function HadithContent() {
             if (selectedChapter && selectedChapter !== "none") params.chapter = selectedChapter
             if (selectedStatus && selectedStatus !== "none") params.status = selectedStatus
             if (debouncedSearchQuery) {
-                // If the user typed something, we clean it before sending
-                // Note: The API might already handle this, but cleaning Alephs/Yaa helps consistency
                 params.hadithArabic = normalizeArabic(debouncedSearchQuery)
             }
 
             const data = await fetchFromAPI("hadiths", params)
             const newItems = data.hadiths?.data || []
 
-            if (isLoadMore) {
-                setBrowseHadiths(prev => [...prev, ...newItems])
-                setBrowsePage(prev => prev + 1)
-            } else {
-                setBrowseHadiths(newItems)
-                setBrowsePage(1)
-            }
-
-            setBrowseHasMore(!!data.hadiths?.next_page_url)
+            // Use transition to prioritize UI responsiveness during render updates
+            startTransition(() => {
+                if (isLoadMore) {
+                    setBrowseHadiths(prev => [...prev, ...newItems])
+                    setBrowsePage(prev => prev + 1)
+                } else {
+                    setBrowseHadiths(newItems)
+                    setBrowsePage(1)
+                }
+                setBrowseHasMore(!!data.hadiths?.next_page_url)
+            })
         } catch (error) {
             console.error(error)
             toast.error("خطأ في جلب الأحاديث")
         } finally {
             setLoading(false)
-            setIsFiltering(false)
             setLoadingMore(false)
         }
     }
@@ -202,19 +187,15 @@ export function HadithContent() {
     }, [activeTab])
 
     // --- UI Helpers ---
-    const copyToClipboard = (text: string) => {
+    const copyToClipboard = useCallback((text: string) => {
         navigator.clipboard.writeText(text)
         toast.success("تم نسخ الحديث بنجاح")
-    }
+    }, [])
 
-    const getStatusColor = (status: string) => {
-        switch (status?.toLowerCase()) {
-            case "sahih": return "bg-emerald-500 hover:bg-emerald-600"
-            case "hasan": return "bg-amber-500 hover:bg-amber-600"
-            case "da'if": return "bg-rose-500 hover:bg-rose-600"
-            default: return "bg-slate-500"
-        }
-    }
+    // Memoized handleToggle to prevent re-creation
+    const handleToggleExpand = useCallback((id: number) => {
+        setExpandedHadith(prev => prev === id ? null : id)
+    }, [])
 
     const renderSkeletons = () => (
         <div className="space-y-4">
@@ -230,53 +211,6 @@ export function HadithContent() {
                 </Card>
             ))}
         </div>
-    )
-
-    const renderHadithCard = (hadith: Hadith, index: number) => (
-        <motion.div
-            key={`${hadith.id}-${index}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index % 15 * 0.05 }}
-        >
-            <Card className="hover:shadow-lg transition-all duration-300 border-emerald-100/50 dark:border-emerald-900/20 overflow-hidden group">
-                <CardHeader
-                    className="cursor-pointer select-none"
-                    onClick={() => setExpandedHadith(expandedHadith === index ? null : index)}
-                >
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2 text-right" dir="rtl">
-                            <div className="flex items-center gap-2 mb-2">
-                                <Badge className={`${getStatusColor(hadith.status)} text-white border-0`}>
-                                    {hadith.status === 'Sahih' ? 'صحيح' : hadith.status === 'Hasan' ? 'حسن' : (hadith.status === "Da'if" || hadith.status === "Da'eef") ? 'ضعيف' : hadith.status}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground font-mono">#{hadith.hadithNumber}</span>
-                            </div>
-                            <CardTitle className="text-xl leading-relaxed font-amiri font-bold text-foreground/90 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
-                                {hadith.hadithArabic}
-                            </CardTitle>
-                            <CardDescription className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm pt-2">
-                                <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                                    {getArabicBookName(hadith.bookSlug, hadith.book?.bookName || hadith.bookSlug)}
-                                </span>
-                                <span className="text-muted-foreground/50">|</span>
-                                <span className="truncate max-w-[200px]">{hadith.chapter?.chapterArabic || hadith.chapterName}</span>
-                            </CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <div className="flex items-center gap-3 px-4 py-4 border-t border-emerald-50 dark:border-emerald-900/20">
-                    <Button variant="secondary" size="sm" onClick={() => copyToClipboard(hadith.hadithArabic)} className="gap-2 rounded-full w-full sm:max-w-[200px] px-4 hover:bg-emerald-100 dark:hover:bg-emerald-900/30">
-                        <Copy className="h-3.5 w-3.5" />
-                        نسخ
-                    </Button>
-                    <ShareHadith
-                        hadith={hadith}
-                        bookNameAr={getArabicBookName(hadith.bookSlug, hadith.book?.bookName || hadith.bookSlug)}
-                    />
-                </div>
-            </Card>
-        </motion.div>
     )
 
     return (
@@ -393,15 +327,17 @@ export function HadithContent() {
                     <TabsContent value="browse" className="relative min-h-[400px]">
                         {(loading && browseHadiths.length === 0) ? renderSkeletons() : (
                             <div className={`grid gap-6 transition-opacity duration-300`}>
-                                {isFiltering && (
-                                    <div className="absolute top-0 inset-x-0 flex items-start justify-center pt-2 z-10 pointer-events-none">
-                                        <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-emerald-100 dark:border-emerald-800 animate-in fade-in slide-in-from-top-4 duration-300 flex items-center gap-2">
-                                            <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                                            <span className="text-sm font-medium">جاري التحديث...</span>
-                                        </div>
-                                    </div>
-                                )}
-                                {browseHadiths.map((h, i) => renderHadithCard(h, i))}
+                                {browseHadiths.map((h, i) => (
+                                    <HadithCard
+                                        key={`${h.id}-${i}`}
+                                        hadith={h}
+                                        index={i}
+                                        isExpanded={expandedHadith === i}
+                                        onToggle={() => handleToggleExpand(i)}
+                                        onCopy={copyToClipboard}
+                                        bookNameAr={getArabicBookName(h.bookSlug, h.book?.bookName || h.bookSlug)}
+                                    />
+                                ))}
                                 {browseHadiths.length > 0 && browseHasMore && (
                                     <div className="flex justify-center pt-8">
                                         <Button
@@ -427,15 +363,17 @@ export function HadithContent() {
                             </div>
                         ) : (
                             <div className="grid gap-6 relative min-h-[200px]">
-                                {isFiltering && (
-                                    <div className="absolute top-0 inset-x-0 flex items-start justify-center pt-2 z-10 pointer-events-none">
-                                        <div className="bg-background/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-emerald-100 dark:border-emerald-800 animate-in fade-in slide-in-from-top-4 duration-300 flex items-center gap-2">
-                                            <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                                            <span className="text-sm font-medium">جاري البحث...</span>
-                                        </div>
-                                    </div>
-                                )}
-                                {browseHadiths.map((h, i) => renderHadithCard(h, i))}
+                                {browseHadiths.map((h, i) => (
+                                    <HadithCard
+                                        key={`${h.id}-${i}`}
+                                        hadith={h}
+                                        index={i}
+                                        isExpanded={expandedHadith === i}
+                                        onToggle={() => handleToggleExpand(i)}
+                                        onCopy={copyToClipboard}
+                                        bookNameAr={getArabicBookName(h.bookSlug, h.book?.bookName || h.bookSlug)}
+                                    />
+                                ))}
                                 {browseHadiths.length > 0 && browseHasMore && (
                                     <div className="flex justify-center pt-8">
                                         <Button

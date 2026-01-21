@@ -8,6 +8,7 @@ interface Track {
     surahNumber: number
     reciterName: string
     reciterId: number
+    moshafId?: number
     artwork?: string
 }
 
@@ -89,52 +90,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         }
     }, [isInitialized, currentTrack]) // We depend on isInitialized to ensure we only do this after local storage load
 
-    // Initialize audio element
-    // Initialize audio element and attach event listeners
-    useEffect(() => {
-        audioRef.current = new Audio()
 
-        // Restore volume if already set from state
-        audioRef.current.volume = volume
-
-        // Event listeners
-        const audio = audioRef.current
-
-        const handleTimeUpdate = () => {
-            setCurrentTime(audio.currentTime)
-        }
-
-        const handleDurationChange = () => {
-            setDuration(audio.duration)
-        }
-
-        const handleEnded = () => {
-            next()
-        }
-
-        const handlePlay = () => {
-            setIsPlaying(true)
-        }
-
-        const handlePause = () => {
-            setIsPlaying(false)
-        }
-
-        audio.addEventListener('timeupdate', handleTimeUpdate)
-        audio.addEventListener('durationchange', handleDurationChange)
-        audio.addEventListener('ended', handleEnded)
-        audio.addEventListener('play', handlePlay)
-        audio.addEventListener('pause', handlePause)
-
-        return () => {
-            audio.removeEventListener('timeupdate', handleTimeUpdate)
-            audio.removeEventListener('durationchange', handleDurationChange)
-            audio.removeEventListener('ended', handleEnded)
-            audio.removeEventListener('play', handlePlay)
-            audio.removeEventListener('pause', handlePause)
-            audio.pause()
-        }
-    }, []) // Run once on mount, but check if we need to sync with restored state better
 
     // Save state to localStorage whenever relevant props change
     useEffect(() => {
@@ -293,6 +249,60 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         // Clear state from local storage so it doesn't reopen
         localStorage.removeItem('quran-audio-state')
     }, [])
+
+    // Use refs for handlers that are called from event listeners to avoid stale closures
+    const nextRef = useRef(next)
+    useEffect(() => {
+        nextRef.current = next
+    }, [next])
+
+    // Initialize audio element
+    // Initialize audio element and attach event listeners
+    useEffect(() => {
+        audioRef.current = new Audio()
+
+        // Restore volume if already set from state
+        audioRef.current.volume = volume
+
+        // Event listeners
+        const audio = audioRef.current
+
+        const handleTimeUpdate = () => {
+            setCurrentTime(audio.currentTime)
+        }
+
+        const handleDurationChange = () => {
+            setDuration(audio.duration)
+        }
+
+        const handleEnded = () => {
+            // Use the ref to get the latest next function
+            nextRef.current()
+        }
+
+        const handlePlay = () => {
+            setIsPlaying(true)
+        }
+
+        const handlePause = () => {
+            setIsPlaying(false)
+        }
+
+        audio.addEventListener('timeupdate', handleTimeUpdate)
+        audio.addEventListener('durationchange', handleDurationChange)
+        audio.addEventListener('ended', handleEnded)
+        audio.addEventListener('play', handlePlay)
+        audio.addEventListener('pause', handlePause)
+
+        return () => {
+            audio.removeEventListener('timeupdate', handleTimeUpdate)
+            audio.removeEventListener('durationchange', handleDurationChange)
+            audio.removeEventListener('ended', handleEnded)
+            audio.removeEventListener('play', handlePlay)
+            audio.removeEventListener('pause', handlePause)
+            audio.pause()
+        }
+    }, []) // Run once on mount, but check if we need to sync with restored state better
 
     const value: AudioPlayerContextType = {
         isPlaying,
