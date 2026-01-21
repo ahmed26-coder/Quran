@@ -456,7 +456,9 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button className="bg-emerald-600 hover:bg-emerald-700">سجل الآن</Button>
+                  <Button variant="outline" className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white hover:text-white" asChild>
+                    <Link href="/auth/login">سجل الآن</Link>
+                  </Button>
                   <Button variant="outline" asChild>
                     <Link href="#features">تعرّف على المزيد</Link>
                   </Button>

@@ -1,11 +1,77 @@
+"use client"
+
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SiteHeader } from "@/components/site-header"
 import { Mail, Phone, MapPin, Send } from "lucide-react"
+import { useState } from "react"
+import { Client, Databases, ID } from "appwrite"
+import { toast } from "sonner"
+
+const client = new Client()
+  .setEndpoint("https://nyc.cloud.appwrite.io/v1")
+  .setProject("696bf0f30026eca12bd2")
+
+const databases = new Databases(client)
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: ""
+  })
+  const [loading, setLoading] = useState(false)
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    // Map existing IDs to simpler state keys if needed, or just use the IDs directly if they match
+    // IDs in JSX: first-name, last-name, email, phone, subject, message
+    // DB keys: firstName, lastName, email, phone, subject, message
+
+    let key = id
+    if (id === "first-name") key = "firstName"
+    if (id === "last-name") key = "lastName"
+
+    setFormData(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      await databases.createDocument(
+        "6970d96b000f94329ee0", // Database ID
+        "messages", // Collection ID - Assumed based on context, user can update if different
+        ID.unique(),
+        formData
+      )
+      toast.success("تم إرسال رسالتك بنجاح", {
+        description: "سنقوم بالرد عليك في أقرب وقت ممكن."
+      })
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: ""
+      })
+    } catch (error) {
+      console.error("Contact form error:", error)
+      toast.error("حدث خطأ أثناء الإرسال", {
+        description: "يرجى المحاولة مرة أخرى لاحقًا."
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <SiteHeader />
@@ -41,7 +107,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-medium">البريد الإلكتروني</h3>
-                      <p className="text-muted-foreground">info@quranportal.com</p>
+                      <p className="text-muted-foreground">ahmedadhem330@gmail.com</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -50,7 +116,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-medium">الهاتف</h3>
-                      <p className="text-muted-foreground">+966 12 345 6789</p>
+                      <p className="text-muted-foreground">+201016626452</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -59,7 +125,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h3 className="font-medium">العنوان</h3>
-                      <p className="text-muted-foreground">الرياض، المملكة العربية السعودية</p>
+                      <p className="text-muted-foreground">القاهرة، جمهورية مصر العربية</p>
                     </div>
                   </div>
                 </div>
@@ -95,47 +161,91 @@ export default function ContactPage() {
                   <p className="text-muted-foreground">يرجى ملء النموذج أدناه وسنقوم بالرد عليكم في أقرب وقت ممكن.</p>
                 </div>
 
-                <form className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="first-name" className="text-sm font-medium">
                         الاسم الأول
                       </label>
-                      <Input id="first-name" placeholder="أدخل اسمك الأول" className="w-full" />
+                      <Input
+                        id="first-name"
+                        placeholder="أدخل اسمك الأول"
+                        className="w-full"
+                        value={formData.firstName}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="last-name" className="text-sm font-medium">
                         الاسم الأخير
                       </label>
-                      <Input id="last-name" placeholder="أدخل اسمك الأخير" className="w-full" />
+                      <Input
+                        id="last-name"
+                        placeholder="أدخل اسمك الأخير"
+                        className="w-full"
+                        value={formData.lastName}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-sm font-medium">
                       البريد الإلكتروني
                     </label>
-                    <Input id="email" type="email" placeholder="أدخل بريدك الإلكتروني" className="w-full" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="أدخل بريدك الإلكتروني"
+                      className="w-full"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-right">
                     <label htmlFor="phone" className="text-sm font-medium">
                       رقم الهاتف
                     </label>
-                    <Input id="phone" type="tel" placeholder="أدخل رقم هاتفك" className="w-full" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="أدخل رقم هاتفك"
+                      className="w-full text-right "
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="subject" className="text-sm font-medium">
                       الموضوع
                     </label>
-                    <Input id="subject" placeholder="أدخل موضوع الرسالة" className="w-full" />
+                    <Input
+                      id="subject"
+                      placeholder="أدخل موضوع الرسالة"
+                      className="w-full"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="message" className="text-sm font-medium">
                       الرسالة
                     </label>
-                    <Textarea id="message" placeholder="اكتب رسالتك هنا" className="min-h-[150px] w-full" />
+                    <Textarea
+                      id="message"
+                      placeholder="اكتب رسالتك هنا"
+                      className="min-h-[150px] w-full"
+                      value={formData.message}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
-                    <Send className="ml-2 h-4 w-4" /> إرسال الرسالة
+                  <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
+                    <Send className="ml-2 h-4 w-4" /> {loading ? "جاري الإرسال..." : "إرسال الرسالة"}
                   </Button>
                 </form>
               </div>
