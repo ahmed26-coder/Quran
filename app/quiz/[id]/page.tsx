@@ -34,6 +34,7 @@ export default function QuizSessionPage({ params }: { params: Promise<{ id: stri
 
     const [session, setSession] = useState<QuizSession | null>(null)
     const [loading, setLoading] = useState(true)
+    const [isReviewing, setIsReviewing] = useState(false)
 
     // Load session from localStorage
     useEffect(() => {
@@ -106,7 +107,85 @@ export default function QuizSessionPage({ params }: { params: Promise<{ id: stri
         router.push("/quiz")
     }
 
+
+
     if (isFinished) {
+        if (isReviewing) {
+            return (
+                <div className="min-h-screen flex flex-col bg-background">
+                    <SiteHeader />
+                    <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center text-right">
+                                <h2 className="text-3xl font-bold">مراجعة الإجابات</h2>
+                                <Button onClick={() => setIsReviewing(false)} variant="outline">
+                                    العودة للنتائج
+                                </Button>
+                            </div>
+
+                            <div className="space-y-8">
+                                {questions.map((question, qIndex) => (
+                                    <Card key={question.id} className="overflow-hidden">
+                                        <CardHeader className="bg-muted/30">
+                                            <div className="flex justify-between items-center">
+                                                <span className={`text-sm font-bold px-3 py-1 rounded-full ${userAnswers[qIndex] !== undefined && question.answers[userAnswers[qIndex]].t === 1
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-red-100 text-red-700"
+                                                    }`}>
+                                                    {userAnswers[qIndex] !== undefined && question.answers[userAnswers[qIndex]].t === 1
+                                                        ? "إجابة صحيحة"
+                                                        : "إجابة خاطئة"}
+                                                </span>
+                                                <CardTitle className="text-right text-lg">السؤال {qIndex + 1}</CardTitle>
+                                            </div>
+                                        </CardHeader>
+                                        <CardContent className="pt-6 space-y-4">
+                                            <p className="text-xl font-medium text-right mb-4">{question.q}</p>
+                                            <div className="space-y-2">
+                                                {question.answers.map((option, oIndex) => {
+                                                    const isSelected = userAnswers[qIndex] === oIndex
+                                                    const isCorrect = option.t === 1
+
+                                                    let styleClass = "w-full p-4 rounded-lg text-right border transition-all "
+
+                                                    if (isSelected && isCorrect) {
+                                                        styleClass += "bg-green-100 border-green-500 text-green-900"
+                                                    } else if (isSelected && !isCorrect) {
+                                                        styleClass += "bg-red-100 border-red-500 text-red-900"
+                                                    } else if (isCorrect) {
+                                                        styleClass += "bg-green-50 border-green-300 text-green-800"
+                                                    } else {
+                                                        styleClass += "bg-background border-border text-muted-foreground opacity-70"
+                                                    }
+
+                                                    return (
+                                                        <div key={oIndex} className={styleClass}>
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-medium">{option.answer}</span>
+                                                                {isCorrect && <span className="text-green-600 font-bold text-sm">الإجابة الصحيحة</span>}
+                                                                {isSelected && !isCorrect && <span className="text-red-600 font-bold text-sm">إجابتك</span>}
+                                                                {isSelected && isCorrect && <span className="text-green-600 font-bold text-sm">إجابتك (صحيحة)</span>}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-center pt-8">
+                                <Button onClick={() => setIsReviewing(false)} size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white md:w-auto min-w-[200px]">
+                                    العودة لصفحة النتائج
+                                </Button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            )
+        }
+
         return (
             <div className="min-h-screen flex flex-col bg-background">
 
@@ -149,7 +228,7 @@ export default function QuizSessionPage({ params }: { params: Promise<{ id: stri
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className=" px-5 py-5">
                             <CardContent className="pt-6">
                                 {score >= 80 && (
                                     <div className="text-center space-y-2">
@@ -180,13 +259,16 @@ export default function QuizSessionPage({ params }: { params: Promise<{ id: stri
                                     </div>
                                 )}
                             </CardContent>
+                            <Button className=" bottom-0 text-red-500 font-bold  bg-white hover:bg-gray-50 flex justify-end hover:underline " size="lg" onClick={() => setIsReviewing(true)}>
+                                مراجعة الإجابات
+                            </Button>
                         </Card>
 
                         <div className="grid md:grid-cols-2 gap-3">
                             <Button className=" bg-emerald-600 hover:bg-emerald-700 text-white" onClick={restartQuiz} size="lg">
                                 اختبار جديد
                             </Button>
-                            <Button asChild variant="outline" size="lg">
+                            <Button asChild variant="ghost" size="lg" className=" border-2">
                                 <Link href="/">العودة للرئيسية</Link>
                             </Button>
                         </div>
