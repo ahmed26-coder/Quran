@@ -35,20 +35,48 @@ export default function QuizPage() {
   const levels = ["سهل", "متوسط", "صعب"]
 
   // جلب البيانات من الـ API الرئيسي واستخراج الفئات
+  // جلب البيانات من ملف JSON المحلي
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true)
       try {
-        const response = await fetch("https://islamicquiz.i8x.net/api/questions?limit=6000")
+        const response = await fetch("/data/quiz.json")
         const data = await response.json()
-        const fetchedQuestions = data.questions || []
-        setAllQuestions(fetchedQuestions)
+
+        const flattenedQuestions: Question[] = []
+        let globalId = 1
+
+        if (data.mainCategories) {
+          data.mainCategories.forEach((category: any) => {
+            if (category.topics) {
+              category.topics.forEach((topic: any) => {
+                if (topic.levelsData) {
+                  Object.values(topic.levelsData).forEach((levelQuestions: any) => {
+                    if (Array.isArray(levelQuestions)) {
+                      levelQuestions.forEach((q: any) => {
+                        flattenedQuestions.push({
+                          id: globalId++,
+                          q: q.q,
+                          answers: q.answers,
+                          category: category.arabicName,
+                          topic: topic.name
+                        })
+                      })
+                    }
+                  })
+                }
+              })
+            }
+          })
+        }
+
+        setAllQuestions(flattenedQuestions)
 
         // استخراج الفئات الفريدة
-        const uniqueCategories = Array.from(new Set(fetchedQuestions.map((q: Question) => q.category))) as string[]
+        const uniqueCategories = Array.from(new Set(flattenedQuestions.map((q) => q.category))) as string[]
         setCategories(uniqueCategories.filter(Boolean))
       } catch (error) {
-        console.error("[v0] Error fetching data:", error)
+        console.error("Error fetching local quiz data:", error)
       } finally {
         setLoading(false)
       }
