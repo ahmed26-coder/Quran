@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2, Heart, Bookmark, ChevronUp } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2, Heart, Bookmark, ChevronUp, Play, Pause, Volume2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -81,6 +81,16 @@ const AyahItem = React.memo(({
     setIsPopoverOpen(true)
   }
 
+  React.useEffect(() => {
+    if (isPopoverOpen) {
+      const handleScroll = () => {
+        setIsPopoverOpen(false)
+      }
+      window.addEventListener("scroll", handleScroll, { capture: true, passive: true })
+      return () => window.removeEventListener("scroll", handleScroll, { capture: true })
+    }
+  }, [isPopoverOpen])
+
   const { isFavorite, addFavorite, removeFavorite } = useFavorites()
   const { isBookmarked, openLoginModal } = useBookmarks()
   const { user } = useAuth()
@@ -109,6 +119,67 @@ const AyahItem = React.memo(({
       })
     }
   }
+
+  const [isPlaying, setIsPlaying] = React.useState(false)
+  const [isLoadingAudio, setIsLoadingAudio] = React.useState(false)
+  const audioRef = React.useRef<HTMLAudioElement | null>(null)
+
+  const handleListen = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isPlaying) {
+      audioRef.current?.pause()
+      setIsPlaying(false)
+      return
+    }
+
+    if (audioRef.current) {
+      audioRef.current.play()
+      setIsPlaying(true)
+      return
+    }
+
+    setIsLoadingAudio(true)
+    try {
+      const res = await fetch(`https://api.quran.com/api/v4/recitations/7/by_ayah/${ayah.number}`)
+      const data = await res.json()
+      if (data.audio_files && data.audio_files.length > 0) {
+        let audioUrl = data.audio_files[0].url
+        if (audioUrl && !audioUrl.includes('://')) {
+          audioUrl = `https://audio.qurancdn.com/${audioUrl}`
+        }
+
+        if (!audioUrl) throw new Error("Audio URL is empty")
+
+        const audio = new Audio(audioUrl)
+        audioRef.current = audio
+        audio.onended = () => setIsPlaying(false)
+        audio.onerror = () => {
+          console.error("Audio playback error")
+          setIsPlaying(false)
+          setIsLoadingAudio(false)
+        }
+
+        await audio.play()
+        setIsPlaying(true)
+      } else {
+        throw new Error("No audio files found")
+      }
+    } catch (error) {
+      console.error("Failed to load audio", error)
+      setIsPlaying(false)
+    } finally {
+      setIsLoadingAudio(false)
+    }
+  }
+
+  React.useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
 
   const handleBookmarkClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -199,6 +270,22 @@ const AyahItem = React.memo(({
             >
               <Bookmark className={`h-4 w-4 ${isBookmarkedAyah ? "fill-current" : ""}`} />
               {isBookmarkedAyah ? "تعديل علامة التلاوة" : "إضافة علامة تلاوة"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`w-full justify-start gap-2 border-2 border-gray-200 ${isPlaying ? "text-emerald-600 bg-emerald-50" : "text-muted-foreground hover:text-emerald-600"}`}
+              onClick={handleListen}
+              disabled={isLoadingAudio}
+            >
+              {isLoadingAudio ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isPlaying ? (
+                <Pause className="h-4 w-4 fill-current" />
+              ) : (
+                <Volume2 className="h-4 w-4" />
+              )}
+              {isPlaying ? "إيقاف الاستماع" : "استماع للآية"}
             </Button>
           </div>
         )}
