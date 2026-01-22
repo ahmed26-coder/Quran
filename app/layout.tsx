@@ -3,6 +3,8 @@ import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AudioPlayerProvider } from "@/components/audio-player-provider"
 import { AuthProvider } from "@/components/auth-provider"
+import { FavoritesProvider } from "@/components/favorites-provider"
+import { BookmarksProvider } from "@/components/bookmarks-provider"
 import { PersistentAudioPlayer } from "@/components/persistent-audio-player"
 import { Tajawal, Amiri } from "next/font/google"
 import { Footer } from "@/components/footer"
@@ -98,10 +100,14 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <AudioPlayerProvider>
-              {children}
-              <Footer />
-              <PersistentAudioPlayer />
-              <Toaster />
+              <FavoritesProvider>
+                <BookmarksProvider>
+                  {children}
+                  <Footer />
+                  <PersistentAudioPlayer />
+                  <Toaster />
+                </BookmarksProvider>
+              </FavoritesProvider>
             </AudioPlayerProvider>
           </AuthProvider>
         </ThemeProvider>

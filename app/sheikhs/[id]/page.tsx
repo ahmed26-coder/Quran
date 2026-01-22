@@ -7,6 +7,8 @@ import { useState, useEffect, useRef, use } from "react"
 import { Slider } from "@/components/ui/slider"
 import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { useFavorites } from "@/hooks/use-favorites"
+import { cn } from "@/lib/utils"
 import { useAudioPlayer } from "@/components/audio-player-provider"
 
 interface Surah {
@@ -23,6 +25,29 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
   const [selectedRecitation, setSelectedRecitation] = useState<any>(null)
   const [expandedRecitation, setExpandedRecitation] = useState<number | null>(null)
   const [surahList, setSurahList] = useState<Surah[]>([])
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites()
+  // Handle loading state safely
+  const isFav = sheikh ? isFavorite(sheikh.id, "sheikh") : false
+
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!sheikh) return
+
+    if (isFav) {
+      removeFavorite(sheikh.id, "sheikh")
+    } else {
+      addFavorite({
+        type: "sheikh",
+        id: sheikh.id,
+        data: {
+          id: sheikh.id,
+          name: sheikh.name,
+          bio: sheikh.bio,
+        },
+      })
+    }
+  }
 
   const allSurahs: Surah[] = [
     { id: 1, name: "الفاتحة" },
@@ -464,9 +489,21 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="icon" onClick={handleShare}>
+                  <Button variant="outline" size="sm" onClick={handleShare}>
                     <Share2 className="h-4 w-4" />
-                    <span className="sr-only">مشاركة</span>
+                    <span className="">مشاركة</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      " border-2 z-10 hover:bg-transparent",
+                      isFav ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-red-500"
+                    )}
+                    onClick={handleFavorite}
+                  >
+                    <Heart className={cn("h-5 w-5", isFav && "fill-current")} />
+                    <span className="">مفضلة</span>
                   </Button>
                 </div>
               </div>
@@ -560,48 +597,82 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
                           </div>
                         </div>
                         <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 max-h-96 overflow-y-auto">
-                          {surahList.map((surah: Surah) => (
-                            <div
-                              key={surah.id}
-                              className="flex items-center justify-between bg-background p-3 rounded border hover:border-emerald-500 transition-colors"
-                            >
-                              <span className="text-sm font-medium">{surah.name}</span>
-                              <div className="flex gap-2 items-center justify-center">
-                                <Button
-                                  size="sm"
-                                  variant={currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id ? "default" : "outline"}
-                                  onClick={() => handlePlaySurah(surah)}
-                                  className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id
-                                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                                    : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                    }`}
-                                >
-                                  {currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id && isPlaying ? (
-                                    <Pause className="h-4 w-4" />
-                                  ) : (
-                                    <Play className="h-4 w-4" />
-                                  )}
-                                  <span>{currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id && isPlaying ? "إيقاف" : "تشغيل"}</span>
-                                </Button>
-                                {downloadingSurahs[surah.id] !== undefined ? (
-                                  <CircularProgress
-                                    progress={downloadingSurahs[surah.id]}
-                                    size={36}
-                                    onCancel={() => handleCancelDownload(surah.id)}
-                                  />
-                                ) : (
+                          {surahList.map((surah: Surah) => {
+                            const recitationId = `${id}-${surah.id}`
+                            const isRecitationFav = isFavorite(recitationId, "recitation")
+
+                            const handleRecitationFavorite = (e: React.MouseEvent) => {
+                              e.stopPropagation()
+                              if (isRecitationFav) {
+                                removeFavorite(recitationId, "recitation")
+                              } else {
+                                addFavorite({
+                                  type: "recitation",
+                                  id: recitationId,
+                                  data: {
+                                    id: recitationId,
+                                    surahName: surah.name,
+                                    surahId: surah.id,
+                                    sheikhId: parseInt(id),
+                                    sheikhName: sheikh.name,
+                                    moshafId: selectedRecitation.id,
+                                    server: selectedRecitation.server
+                                  }
+                                })
+                              }
+                            }
+
+                            return (
+                              <div
+                                key={surah.id}
+                                className="flex items-center justify-between bg-background p-3 rounded border hover:border-emerald-500 transition-colors"
+                              >
+                                <span className="text-sm font-medium">{surah.name}</span>
+                                <div className="flex gap-2 items-center justify-center">
+                                  <Button
+                                    size="sm"
+                                    variant={currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id ? "default" : "outline"}
+                                    onClick={() => handlePlaySurah(surah)}
+                                    className={`flex items-center border-emerald-600 gap-2 h-8 px-3 ${currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id
+                                      ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                      : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                      }`}
+                                  >
+                                    {currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id && isPlaying ? (
+                                      <Pause className="h-4 w-4" />
+                                    ) : (
+                                      <Play className="h-4 w-4" />
+                                    )}
+                                    <span>{currentTrack?.surahNumber === surah.id && currentTrack?.reciterId === parseInt(id) && currentTrack?.moshafId === selectedRecitation.id && isPlaying ? "إيقاف" : "تشغيل"}</span>
+                                  </Button>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handleDownloadSurah(surah.id, surah.name)}
-                                    className="h-12 w-12 p-0"
+                                    onClick={handleRecitationFavorite}
+                                    className={` px-2 rounded-full hover:bg-emerald-50 dark:hover:bg-emerald-900/20 ${isRecitationFav ? "text-red-500 hover:text-red-600" : "text-muted-foreground/30 hover:text-red-500"}`}
                                   >
-                                    <Download className="h-6 w-6" />
+                                    <Heart className={`h-5 w-5 ${isRecitationFav ? "fill-current" : ""}`} />
                                   </Button>
-                                )}
+                                  {downloadingSurahs[surah.id] !== undefined ? (
+                                    <CircularProgress
+                                      progress={downloadingSurahs[surah.id]}
+                                      size={36}
+                                      onCancel={() => handleCancelDownload(surah.id)}
+                                    />
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleDownloadSurah(surah.id, surah.name)}
+                                      className="h-12 w-12 p-0"
+                                    >
+                                      <Download className="h-6 w-6" />
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </div>
                     )}

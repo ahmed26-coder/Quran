@@ -91,18 +91,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const loginWithGoogle = () => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://quranee.netlify.app';
+        const currentUrl = typeof window !== 'undefined' ? window.location.href : origin;
+
         account.createOAuth2Session(
             OAuthProvider.Google,
-            'https://quranee.netlify.app', // ✅ successUrl (الصفحة الرئيسية)
-            'https://quranee.netlify.app/auth/login' // ✅ failureUrl
+            currentUrl, // returns to the current page
+            `${origin}/auth/login` // failure returns to login page
         );
     };
 
     const loginWithFacebook = () => {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'https://quranee.netlify.app';
+        const currentUrl = typeof window !== 'undefined' ? window.location.href : origin;
+
         account.createOAuth2Session(
             OAuthProvider.Facebook,
-            'https://quranee.netlify.app', // ✅ successUrl
-            'https://quranee.netlify.app/auth/login'  // ✅ failureUrl
+            currentUrl, // returns to the current page
+            `${origin}/auth/login` // failure returns to login page
         );
     };
 

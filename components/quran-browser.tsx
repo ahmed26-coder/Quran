@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2 } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2, Heart, Bookmark } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -40,6 +40,12 @@ import {
 } from "@/components/ui/popover"
 import dynamic from "next/dynamic"
 import { ShareAyah } from "./share-ayah"
+import { useFavorites } from "@/hooks/use-favorites"
+import { useBookmarks } from "@/components/bookmarks-provider"
+import { BookmarkDialog } from "./bookmark-dialog"
+import { Bookmark as BookmarkIcon } from "lucide-react"
+import { useAuth } from "./auth-provider"
+import Link from "next/link"
 
 // --- Lazy Components ---
 
@@ -70,10 +76,47 @@ const AyahItem = React.memo(({
 
   const handleAyahClick = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (onAyahClick) {
-      onAyahClick(ayah)
-    }
     setIsPopoverOpen(true)
+  }
+
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites()
+  const { isBookmarked, openLoginModal } = useBookmarks()
+  const { user } = useAuth()
+
+  const surahId = surah?.number || (ayah as any).surah?.number || 0
+  const favId = `${surahId}:${ayah.numberInSurah}`
+  const isFav = isFavorite(favId, "ayah")
+  const isBookmarkedAyah = isBookmarked(surahId, ayah.numberInSurah)
+
+  const handleFavorite = () => {
+    if (isFav) {
+      removeFavorite(favId, "ayah")
+    } else {
+      addFavorite({
+        type: "ayah",
+        id: favId,
+        data: {
+          number: ayah.number,
+          text: ayah.text,
+          surahName: surah?.name || (ayah as any).surah?.name || "",
+          surahNumber: surahId,
+          numberInSurah: ayah.numberInSurah,
+          juz: ayah.juz,
+          page: ayah.page
+        }
+      })
+    }
+  }
+
+  const handleBookmarkClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!user) {
+      setIsPopoverOpen(false)
+      openLoginModal()
+      return
+    }
+    setIsPopoverOpen(false)
+    if (onAyahClick) onAyahClick(ayah)
   }
 
   return (
@@ -85,16 +128,29 @@ const AyahItem = React.memo(({
           onClick={handleAyahClick}
         >
           {ayah.text.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "")}
-          <span
-            className="inline-flex items-center justify-center mx-2 align-middle border-2 border-emerald-200 rounded-full text-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/20 font-sans font-bold"
-            style={{
-              width: `${fontSize * 1.1}px`,
-              height: `${fontSize * 1.1}px`,
-              fontSize: `${fontSize * 0.45}px`
-            }}
-          >
-            {ayah.numberInSurah}
-          </span>
+          <div className="relative inline-flex items-center justify-center ms-3 align-middle text-emerald-600 dark:text-emerald-500">
+            <span
+              className="leading-none select-none"
+              style={{
+                fontSize: `${fontSize * 1.4}px`,
+                fontFamily: "Amiri, serif"
+              }}
+            >
+              ۝
+            </span>
+            <span
+              className="absolute font-bold font-sans"
+              style={{
+                fontSize: `${fontSize * 0.45}px`,
+                color: "currentColor",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -45%)",
+              }}
+            >
+              {ayah.numberInSurah}
+            </span>
+          </div>
         </span>
       </PopoverTrigger>
       <PopoverContent
@@ -106,6 +162,24 @@ const AyahItem = React.memo(({
         {surah && (
           <div className="flex flex-col gap-1">
             <ShareAyah ayah={ayah} surah={surah} />
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`w-full justify-start gap-2 border-2 border-gray-200 ${isFav ? "text-red-500 hover:text-red-600 hover:bg-red-50" : "text-muted-foreground hover:text-emerald-600"}`}
+              onClick={handleFavorite}
+            >
+              <Heart className={`h-4 w-4 ${isFav ? "fill-current" : ""}`} />
+              {isFav ? "محذوف من المفضلة" : "إضافة للمفضلة"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`w-full justify-start gap-2 border-2 border-gray-200 ${isBookmarkedAyah ? "text-emerald-600 bg-emerald-50/50" : "text-muted-foreground hover:text-emerald-600"}`}
+              onClick={handleBookmarkClick}
+            >
+              <BookmarkIcon className={`h-4 w-4 ${isBookmarkedAyah ? "fill-current" : ""}`} />
+              {isBookmarkedAyah ? "تعديل علامة التلاوة" : "إضافة علامة تلاوة"}
+            </Button>
           </div>
         )}
       </PopoverContent>
@@ -244,6 +318,10 @@ interface Ayah {
   ruku: number
   hizbQuarter: number
   sajda: boolean
+  surah?: {
+    number: number
+    name: string
+  }
 }
 
 interface QuranBrowserProps {
@@ -639,8 +717,27 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     }
   }, [isInitialized, initialAyah, readerMode])
 
+  // --- Bookmark Logic ---
+  const [isBookmarkDialogOpen, setIsBookmarkDialogOpen] = useState(false)
+  const [selectedAyahForBookmark, setSelectedAyahForBookmark] = useState<any>(null)
+
+  const handleAyahClickForBookmark = (ayah: Ayah) => {
+    setSelectedAyahForBookmark({
+      surahNumber: (ayah as any).surah?.number || activeSurah?.number || 0,
+      ayahNumber: ayah.numberInSurah,
+      surahName: (ayah as any).surah?.name || activeSurah?.name || "",
+      ayahText: ayah.text
+    })
+    setIsBookmarkDialogOpen(true)
+  }
+
   return (
     <div className="w-full space-y-8 min-h-[800px]">
+      <BookmarkDialog
+        isOpen={isBookmarkDialogOpen}
+        onClose={() => setIsBookmarkDialogOpen(false)}
+        ayahData={selectedAyahForBookmark}
+      />
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -914,7 +1011,7 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                           title="حجم الخط"
                         >
                           <Type className="h-4 w-4 md:ml-2" />
-                          <span className="inline text-xs font-bold">{fontSize} حجم الخط</span>
+                          <span className="inline text-xs font-bold">{fontSize} <span className="hidden md:inline">حجم الخط</span></span>
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-60 p-4">
@@ -933,7 +1030,14 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                         </div>
                       </PopoverContent>
                     </Popover>
-
+                    <Link href="/bookmarks">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-10 px-3 items-center rounded-xl flex border-emerald-200 dark:border-emerald-800">
+                        <Bookmark />
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -1028,7 +1132,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                   currentSurahNum={currentSurahNum}
                   activeSurah={activeSurah}
                   currentPage={currentPage}
-                  handlePageChange={handlePageChange} surahs={[]} />
+                  handlePageChange={handlePageChange}
+                  surahs={surahs}
+                  onAyahClick={handleAyahClickForBookmark}
+                />
               ) : (
                 <div className="relative w-full h-auto flex flex-col items-center bg-[#fffdf5] dark:bg-[#1a1c1e]/10 py-10 px-4">
                   <div className="relative bg-[#fffdf5] h-auto w-full max-w-[650px] aspect-[1/1.5] shadow-2xl rounded-lg overflow-hidden border">

@@ -155,8 +155,8 @@ export function ShareAyah({ ayah, surah, trigger }: ShareAyahProps) {
                     {trigger || (
                         <Button
                             variant="outline"
-                            size="lg"
-                            className="gap-2 bg-white dark:bg-gray-900 border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl shadow-lg font-bold text-base px-6 py-3"
+                            size="sm"
+                            className="gap-2 bg-white dark:bg-gray-900 border border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-md shadow-lg font-bold text-base px-6"
                         >
                             <Share2 className="h-5 w-5" />
                             مشاركة
@@ -236,7 +236,7 @@ export function ShareAyah({ ayah, surah, trigger }: ShareAyahProps) {
             <div className="fixed -left-[9999px] top-0">
                 <div
                     ref={templateRef}
-                    className="w-[680px] h-auto flex flex-col"
+                    className="w-[800px] h-auto flex flex-col"
                     dir="rtl"
                     style={{
                         fontFamily: "Amiri, serif",
@@ -314,26 +314,31 @@ export function ShareAyah({ ayah, surah, trigger }: ShareAyahProps) {
                     </div>
 
                     {/* ===== Ayah Text ===== */}
-                    <div className="flex items-center justify-center px-8 mt-6">
+                    <div className="flex max-w-[720px] mx-auto items-center justify-center px-8 mt-6">
                         <div
                             className="text-center leading-[1.55] text-[42px]"
                             style={{ color: "#022c22" }}
                         >
                             {cleanAyahText}
 
-                            <div className="relative inline-flex items-center justify-center ms-3 align-middle">
+                            <div className="relative inline-flex items-center justify-center ms-3 align-middle text-emerald-600">
                                 <span
-                                    className="text-[32px] leading-none"
-                                    style={{ color: "#059669" }}
+                                    className="leading-none select-none"
+                                    style={{
+                                        fontSize: "60px",
+                                        fontFamily: "Amiri, serif"
+                                    }}
                                 >
                                     ۝
                                 </span>
                                 <span
-                                    className="absolute text-[16px] font-bold"
+                                    className="absolute font-bold font-sans"
                                     style={{
-                                        color: "#065f46",
+                                        fontSize: "20px",
+                                        color: "currentColor",
                                         top: "50%",
-                                        transform: "translateY(-45%)",
+                                        left: "50%",
+                                        transform: "translate(-50%, -42%)",
                                     }}
                                 >
                                     {ayah.numberInSurah}

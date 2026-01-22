@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Calendar, Mail, User as UserIcon, LogOut } from "lucide-react"
+import { Calendar, Mail, User as UserIcon, LogOut, Heart, Bookmark } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import Link from "next/link"
@@ -119,26 +119,48 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <div className="border bg-card rounded-lg p-6 space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">تفاصيل الحساب</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Link href="/favorites">
+                  <Button variant="outline" className="w-full h-auto p-4 flex flex-col items-center gap-2 border-emerald-100 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/10 rounded-2xl group transition-all">
+                    <div className="h-10 w-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                      <Heart className="h-5 w-5 fill-current" />
+                    </div>
+                    <span className="font-bold">المفضلة</span>
+                    <p className="text-xs text-muted-foreground">عرض العناصر التي تم حفظها</p>
+                  </Button>
+                </Link>
+
+                <Link href="/bookmarks">
+                  <Button variant="outline" className="w-full h-auto p-4 flex flex-col items-center gap-2 border-emerald-100 font-bold hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-900/10 rounded-2xl group transition-all">
+                    <div className="h-10 w-10 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform">
+                      <Bookmark className="h-5 w-5 fill-current" />
+                    </div>
+                    <span className="font-bold">علامات التلاوة</span>
+                    <p className="text-xs text-muted-foreground">ملاحظاتك وصور آياتك</p>
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="border bg-card rounded-2xl p-6 space-y-4 shadow-sm border-emerald-50 dark:border-emerald-900/20">
+                <h3 className="font-bold text-lg border-b pb-2 text-emerald-800 dark:text-emerald-400">تفاصيل الحساب</h3>
                 <div className="grid gap-y-4 text-sm">
                   <div className="flex justify-between py-1">
                     <span className="text-muted-foreground">الاسم الكامل</span>
-                    <span className="font-medium">{user.name}</span>
+                    <span className="font-medium text-lg">{user.name}</span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="text-muted-foreground">البريد الإلكتروني</span>
-                    <span className="font-medium">{user.email}</span>
+                    <span className="font-medium text-lg">{user.email}</span>
                   </div>
                 </div>
               </div>
             </CardContent>
 
             <CardFooter className="flex flex-col sm:flex-row gap-3 pt-2 pb-8 justify-center">
-              <Button variant="outline" asChild className="w-full sm:w-auto">
+              <Button variant="outline" asChild className="w-full sm:w-auto rounded-xl">
                 <Link href="/">العودة للرئيسية</Link>
               </Button>
-              <Button variant="destructive" onClick={logout} className="w-full sm:w-auto gap-2">
+              <Button variant="destructive" onClick={logout} className="w-full sm:w-auto gap-2 rounded-xl">
                 <LogOut className="h-4 w-4" />
                 تسجيل الخروج
               </Button>
