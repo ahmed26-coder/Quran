@@ -144,11 +144,11 @@ export default function ProfilePage() {
               <div className="border bg-card rounded-2xl p-6 space-y-4 shadow-sm border-emerald-50 dark:border-emerald-900/20">
                 <h3 className="font-bold text-lg border-b pb-2 text-emerald-800 dark:text-emerald-400">تفاصيل الحساب</h3>
                 <div className="grid gap-y-4 text-sm">
-                  <div className="flex justify-between py-1">
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                     <span className="text-muted-foreground">الاسم الكامل</span>
                     <span className="font-medium text-lg">{user.name}</span>
                   </div>
-                  <div className="flex justify-between py-1">
+                  <div className="flex flex-col sm:flex-row sm:justify-between py-1">
                     <span className="text-muted-foreground">البريد الإلكتروني</span>
                     <span className="font-medium text-lg">{user.email}</span>
                   </div>
