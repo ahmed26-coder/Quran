@@ -9,6 +9,23 @@ const Popover = PopoverPrimitive.Root
 
 const PopoverTrigger = PopoverPrimitive.Trigger
 
+const PopoverAnchor = PopoverPrimitive.Anchor
+
+const PopoverArrow = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Arrow>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Arrow>
+>(({ className, ...props }, ref) => (
+  <PopoverPrimitive.Arrow
+    ref={ref}
+    className={cn(
+      "fill-white dark:fill-gray-900",
+      className
+    )}
+    {...props}
+  />
+))
+PopoverArrow.displayName = PopoverPrimitive.Arrow.displayName
+
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
@@ -28,4 +45,4 @@ const PopoverContent = React.forwardRef<
 ))
 PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
-export { Popover, PopoverTrigger, PopoverContent }
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, PopoverArrow }

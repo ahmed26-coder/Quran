@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
-import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2, Heart, Bookmark } from "lucide-react"
+import { Search, ChevronLeft, ChevronRight, Type, Image as ImageIcon, Loader2, Info, ArrowRight, X, BookOpen, Minimize2, Maximize2, Heart, Bookmark, ChevronUp } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,13 +37,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverAnchor,
 } from "@/components/ui/popover"
 import dynamic from "next/dynamic"
 import { ShareAyah } from "./share-ayah"
 import { useFavorites } from "@/hooks/use-favorites"
 import { useBookmarks } from "@/components/bookmarks-provider"
 import { BookmarkDialog } from "./bookmark-dialog"
-import { Bookmark as BookmarkIcon } from "lucide-react"
 import { useAuth } from "./auth-provider"
 import Link from "next/link"
 
@@ -73,9 +73,11 @@ const AyahItem = React.memo(({
   isTafseerMode?: boolean
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = React.useState(false)
+  const [mouseCoords, setMouseCoords] = React.useState({ x: 0, y: 0 })
 
   const handleAyahClick = (e: React.MouseEvent) => {
     e.stopPropagation()
+    setMouseCoords({ x: e.clientX, y: e.clientY })
     setIsPopoverOpen(true)
   }
 
@@ -153,14 +155,32 @@ const AyahItem = React.memo(({
           </div>
         </span>
       </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-2 bg-white dark:bg-gray-900 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-xl"
-        align="start"
-        side="bottom"
-        sideOffset={8}
+
+      {/* Virtual Anchor following mouse click */}
+      <div
+        style={{
+          position: 'fixed',
+          left: mouseCoords.x,
+          top: mouseCoords.y,
+          width: 0,
+          height: 0,
+          pointerEvents: 'none'
+        }}
+        className="z-0"
       >
+        <PopoverAnchor />
+      </div>
+      <PopoverContent
+        className="w-auto px-2 py-3 bg-white dark:bg-gray-900 border-2 border-emerald-200 dark:border-emerald-800 rounded-xl shadow-xl overflow-visible"
+        align="center"
+        side="bottom"
+        sideOffset={25}
+      >
+        {/* Custom Arrow for better control */}
+        <div className="absolute -top-[7px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-900 border-t-2 border-l-2 border-emerald-200 dark:border-emerald-800 rotate-45" />
+
         {surah && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <ShareAyah ayah={ayah} surah={surah} />
             <Button
               variant="ghost"
@@ -177,7 +197,7 @@ const AyahItem = React.memo(({
               className={`w-full justify-start gap-2 border-2 border-gray-200 ${isBookmarkedAyah ? "text-emerald-600 bg-emerald-50/50" : "text-muted-foreground hover:text-emerald-600"}`}
               onClick={handleBookmarkClick}
             >
-              <BookmarkIcon className={`h-4 w-4 ${isBookmarkedAyah ? "fill-current" : ""}`} />
+              <Bookmark className={`h-4 w-4 ${isBookmarkedAyah ? "fill-current" : ""}`} />
               {isBookmarkedAyah ? "تعديل علامة التلاوة" : "إضافة علامة تلاوة"}
             </Button>
           </div>
