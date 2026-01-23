@@ -1195,27 +1195,6 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                 </div>
 
                 <div className="flex-1" />
-
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= 604}
-                    className="h-8 w-8 rounded-lg"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage <= 1}
-                    className="h-8 w-8 rounded-lg"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
               </div>
             )}
           </div>
@@ -1330,6 +1309,6 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
         activeSurahName={activeSurah?.name}
         readerMode={readerMode}
       />
-    </div>
+    </div >
   )
 }
