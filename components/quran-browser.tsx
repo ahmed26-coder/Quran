@@ -643,10 +643,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       // 2. Ayah Search (API) - Only if query is long enough
       if (searchQuery.length > 2) {
         try {
-          const res = await fetch(`https://api.alquran.cloud/v1/search/${encodeURIComponent(searchQuery)}/all/quran-simple`)
+          const res = await fetch(`https://api.quran.com/api/v4/search?q=${encodeURIComponent(searchQuery)}&size=10`)
           const data = await res.json()
-          if (data.code === 200 && data.data.matches) {
-            data.data.matches.slice(0, 10).forEach((m: any) => {
+          if (data.search && data.search.results) {
+            data.search.results.forEach((m: any) => {
               results.push({ type: 'ayah', item: m })
             })
           }
@@ -667,12 +667,25 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       await handleSelectSurah(result.item.number)
     } else {
       const ayah = result.item
-      setCurrentSurahNum(ayah.surah.number)
-      setCurrentPage(ayah.page)
-      setCurrentJuz(ayah.juz)
-      await fetchSurahData(ayah.surah.number)
-      await fetchPageData(ayah.page)
-      saveState(ayah.surah.number, ayah.page, ayah.juz, readerMode, fontSize)
+      // Handle api.quran.com structure
+      const verseKey = ayah.verse_key
+      const [surahNum, ayahNum] = verseKey.split(':').map(Number)
+
+      try {
+        const res = await fetch(`https://api.alquran.cloud/v1/ayah/${verseKey}`)
+        const data = await res.json()
+        if (data.code === 200) {
+          const detail = data.data
+          setCurrentSurahNum(surahNum)
+          setCurrentPage(detail.page)
+          setCurrentJuz(detail.juz)
+          await fetchSurahData(surahNum)
+          await fetchPageData(detail.page)
+          saveState(surahNum, detail.page, detail.juz, readerMode, fontSize)
+        }
+      } catch (e) {
+        console.error("Failed to fetch ayah details", e)
+      }
     }
     setIsSearchOpen(false)
     setSearchQuery("")
@@ -913,9 +926,9 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                                   </div>
                                   <div>
                                     <p className="font-bold text-sm">
-                                      {res.type === 'surah' ? res.item.name : `${res.item.surah.name} (${res.item.numberInSurah})`}
+                                      {res.type === 'surah' ? res.item.name : `${res.item.verse_key} - ${surahs.find(s => s.number === parseInt(res.item.verse_key.split(':')[0]))?.name || ''}`}
                                     </p>
-                                    <p className="text-xs text-muted-foreground line-clamp-1 font-amiri">
+                                    <p className="text-2xl text-muted-foreground line-clamp-2 font-amiri leading-relaxed">
                                       {res.type === 'surah' ? `سورة رقم ${res.item.number}` : res.item.text}
                                     </p>
                                   </div>
@@ -1001,9 +1014,9 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
                                     </div>
                                     <div>
                                       <p className="font-bold text-sm">
-                                        {res.type === 'surah' ? res.item.name : `${res.item.surah.name} (${res.item.numberInSurah})`}
+                                        {res.type === 'surah' ? res.item.name : `${res.item.verse_key} - ${surahs.find(s => s.number === parseInt(res.item.verse_key.split(':')[0]))?.name || ''}`}
                                       </p>
-                                      <p className="text-xs text-muted-foreground line-clamp-1 font-amiri">
+                                      <p className="text-2xl text-muted-foreground line-clamp-2 font-amiri leading-relaxed">
                                         {res.type === 'surah' ? `سورة رقم ${res.item.number}` : res.item.text}
                                       </p>
                                     </div>
