@@ -10,12 +10,13 @@ interface Surah {
   revelationType: string
 }
 
-export const dynamic = "force-dynamic"
+
 
 async function getSurahs() {
   try {
     const res = await fetch("http://api.alquran.cloud/v1/surah", {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      cache: "force-cache",
+      next: { tags: ["quran:surah-list"], revalidate: 3600 } // Cache for 1 hour
     })
     if (!res.ok) {
       throw new Error(`Failed to fetch surahs: ${res.status}`)

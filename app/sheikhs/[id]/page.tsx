@@ -241,7 +241,10 @@ export default function SheikhDetailPage({ params }: { params: Promise<{ id: str
   useEffect(() => {
     const fetchSheikhData = async () => {
       try {
-        const response = await fetch(`https://mp3quran.net/api/v3/reciters?language=ar&reciter=${id}`)
+        const response = await fetch(`https://mp3quran.net/api/v3/reciters?language=ar&reciter=${id}`, {
+          cache: "force-cache",
+          next: { tags: ["quran:reciter", `reciter:${id}`] }
+        })
         const data = await response.json()
 
         if (data.reciters && data.reciters.length > 0) {

@@ -34,6 +34,7 @@ export async function apiFetch<T>(
 
     try {
         const response = await fetch(url.toString(), {
+            cache: "force-cache",
             ...rest,
             next: {
                 tags: [...tags, `source:${source}`], // Always tag the source

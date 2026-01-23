@@ -87,7 +87,10 @@ export async function fetchTafseerForAyah(
     try {
         const response = await fetch(
             `${ALQURAN_CLOUD_API}/ayah/${surahNumber}:${ayahNumber}/${tafseerIdentifier}`,
-            { next: { revalidate: 3600 } }
+            {
+                cache: "force-cache",
+                next: { tags: ["tafseer", `tafseer:${tafseerIdentifier}`], revalidate: 3600 }
+            }
         )
 
         if (!response.ok) {

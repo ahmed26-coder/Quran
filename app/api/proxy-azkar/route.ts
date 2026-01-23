@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
     try {
         // We fetch from GitHub instead of azkar.ml to avoid DNS issues (ENOTFOUND .ml)
         const res = await fetch(DATA_SOURCE, {
-            next: { revalidate: 3600 }, // Cache for an hour
+            cache: "force-cache",
+            next: { tags: ["azkar"] },
         });
 
         if (!res.ok) {

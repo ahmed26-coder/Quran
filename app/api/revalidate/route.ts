@@ -3,48 +3,43 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import { API_CONFIG } from "@/lib/api/config";
 
 /**
- * PRODUCTION-GRADE REVALIDATION ENDPOINT
+ * Webhook for on-demand revalidation.
  * 
- * Supports both Tag-based and Path-based revalidation.
- * Securely protected by a shared secret.
+ * Target URL example: /api/revalidate?secret=YOUR_SECRET&tag=quran:surah
+ * Target URL example: /api/revalidate?secret=YOUR_SECRET&path=/quran
  */
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const secret = searchParams.get("secret");
+    const tag = searchParams.get("tag");
+    const path = searchParams.get("path");
 
     // 1. Security Check
     if (secret !== API_CONFIG.revalidateSecret) {
-        return NextResponse.json({ message: "Invalid secret token" }, { status: 401 });
+        return NextResponse.json({ message: "Invalid secret" }, { status: 401 });
     }
 
     try {
-        const body = await req.json();
-        const { tag, path, source } = body;
-
-        // 2. Validate Payload
-        if (!tag && !path) {
-            return NextResponse.json({ message: "Tag or Path is required" }, { status: 400 });
-        }
-
-        // 3. Execution
+        // 2. Revalidate by Tag
         if (tag) {
-            // Revalidate by granular tag (recommended for data updates)
             revalidateTag(tag);
-            console.log(`[ISR] Revalidated Tag: ${tag} (Source: ${source || 'Unknown'})`);
+            return NextResponse.json({ revalidated: true, now: Date.now(), tag });
         }
 
+        // 3. Revalidate by Path
         if (path) {
-            // Revalidate by path (useful for UI changes or forced layout updates)
             revalidatePath(path);
-            console.log(`[ISR] Revalidated Path: ${path}`);
+            return NextResponse.json({ revalidated: true, now: Date.now(), path });
         }
 
         return NextResponse.json({
-            revalidated: true,
-            now: Date.now(),
-            target: tag || path
-        });
+            message: "Missing 'tag' or 'path' parameter"
+        }, { status: 400 });
+
     } catch (err) {
-        return NextResponse.json({ message: "Error revalidating", error: String(err) }, { status: 500 });
+        return NextResponse.json({
+            message: "Revalidation failed",
+            error: err instanceof Error ? err.message : String(err)
+        }, { status: 500 });
     }
 }

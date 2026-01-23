@@ -140,7 +140,10 @@ const AyahItem = React.memo(({
 
     setIsLoadingAudio(true)
     try {
-      const res = await fetch(`https://api.quran.com/api/v4/recitations/7/by_ayah/${ayah.number}`)
+      const res = await fetch(`https://api.quran.com/api/v4/recitations/7/by_ayah/${ayah.number}`, {
+        cache: "force-cache",
+        next: { tags: ["quran:audio", `ayah:${ayah.number}`] }
+      })
       const data = await res.json()
       if (data.audio_files && data.audio_files.length > 0) {
         let audioUrl = data.audio_files[0].url
@@ -501,7 +504,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     setIsLoading(true)
     try {
       const data = await fetchWithCache(`surah-${num}`, async () => {
-        const res = await fetch(`https://api.alquran.cloud/v1/surah/${num}`)
+        const res = await fetch(`https://api.alquran.cloud/v1/surah/${num}`, {
+          cache: "force-cache",
+          next: { tags: ["quran:surah", `surah:${num}`] }
+        })
         const json = await res.json()
         return json.code === 200 ? json.data.ayahs : null
       })
@@ -521,7 +527,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     setIsLoading(true)
     try {
       const data = await fetchWithCache(`page-${page}`, async () => {
-        const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`)
+        const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`, {
+          cache: "force-cache",
+          next: { tags: ["quran:page", `page:${page}`] }
+        })
         const json = await res.json()
         return json.code === 200 ? json.data.ayahs : null
       })
@@ -556,7 +565,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     setCurrentJuz(juz)
     setIsLoading(true)
     try {
-      const res = await fetch(`https://api.alquran.cloud/v1/juz/${juz}`)
+      const res = await fetch(`https://api.alquran.cloud/v1/juz/${juz}`, {
+        cache: "force-cache",
+        next: { tags: ["quran:juz", `juz:${juz}`] }
+      })
       const data = await res.json()
       if (data.code === 200) {
         const firstAyah = data.data.ayahs[0]
@@ -581,7 +593,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
     setCurrentPage(page)
     setIsLoading(true)
     try {
-      const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`)
+      const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`, {
+        cache: "force-cache",
+        next: { tags: ["quran:page", `page:${page}`] }
+      })
       const data = await res.json()
       if (data.code === 200) {
         const firstAyah = data.data.ayahs[0]
@@ -672,7 +687,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       const [surahNum, ayahNum] = verseKey.split(':').map(Number)
 
       try {
-        const res = await fetch(`https://api.alquran.cloud/v1/ayah/${verseKey}`)
+        const res = await fetch(`https://api.alquran.cloud/v1/ayah/${verseKey}`, {
+          cache: "force-cache",
+          next: { tags: ["quran:ayah", `ayah:${verseKey}`] }
+        })
         const data = await res.json()
         if (data.code === 200) {
           const detail = data.data
@@ -715,7 +733,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
         }))
       } else {
         // In image mode, fetch page data to get all ayahs on the page
-        const res = await fetch(`https://api.alquran.cloud/v1/page/${currentPage}`)
+        const res = await fetch(`https://api.alquran.cloud/v1/page/${currentPage}`, {
+          cache: "force-cache",
+          next: { tags: ["quran:page", `page:${currentPage}`] }
+        })
         const data = await res.json()
         if (data.code === 200) {
           ayahsToFetch = data.data.ayahs.map((ayah: any) => ({
@@ -797,7 +818,10 @@ export default function QuranBrowser({ surahs, initialSurah, initialAyah }: Qura
       // If initialAyah is provided, find its page
       if (initialAyah && initialSurah) {
         try {
-          const res = await fetch(`https://api.alquran.cloud/v1/ayah/${initialSurah}:${initialAyah}`)
+          const res = await fetch(`https://api.alquran.cloud/v1/ayah/${initialSurah}:${initialAyah}`, {
+            cache: "force-cache",
+            next: { tags: ["quran:ayah", `ayah:${initialSurah}:${initialAyah}`] }
+          })
           const data = await res.json()
           if (data.code === 200) {
             initialPageNum = data.data.page

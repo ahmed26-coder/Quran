@@ -40,7 +40,10 @@ export default function QuizPage() {
     const fetchAllData = async () => {
       setLoading(true)
       try {
-        const response = await fetch("/data/quiz.json")
+        const response = await fetch("/data/quiz.json", {
+          cache: "force-cache",
+          next: { tags: ["quiz-data"] }
+        })
         const data = await response.json()
 
         const flattenedQuestions: Question[] = []

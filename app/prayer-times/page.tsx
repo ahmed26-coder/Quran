@@ -75,7 +75,9 @@ export default function PrayerTimesPage() {
         setLoading(true)
         setError(null)
         try {
-            const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=4`)
+            const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lng}&method=4`, {
+                cache: "force-cache"
+            })
             const json = await res.json()
             if (json.code === 200) {
                 setData(json.data)
@@ -95,7 +97,9 @@ export default function PrayerTimesPage() {
         setLoading(true)
         setError(null)
         try {
-            const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=4`)
+            const res = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=4`, {
+                cache: "force-cache"
+            })
             const json = await res.json()
             if (json.code === 200) {
                 setData(json.data)

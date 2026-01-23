@@ -17,7 +17,10 @@ export default function SheikhsPage() {
   useEffect(() => {
     const fetchSheikhs = async () => {
       try {
-        const response = await fetch("https://mp3quran.net/api/v3/reciters?language=ar")
+        const response = await fetch("https://mp3quran.net/api/v3/reciters?language=ar", {
+          cache: "force-cache",
+          next: { tags: ["quran:reciters"] }
+        })
         const data = await response.json()
         console.log("API Response:", data)
 
