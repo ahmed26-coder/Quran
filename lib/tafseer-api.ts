@@ -26,54 +26,12 @@ export interface TafseerText {
 
 /**
  * Fetch list of available Tafseer sources
- * We are manually defining this list because we want to curate only the ones working reliably
+ * Use static data file instead of hardcoding
  */
 export async function fetchAvailableTafseers(): Promise<TafseerSource[]> {
-    // Curated list of high-quality Tafsirs supported by api.alquran.cloud
-    return [
-        {
-            id: 1,
-            identifier: "ar.muyassar",
-            name: "تفسير الميسر",
-            author: "مجمع الملك فهد",
-            language: "ar"
-        },
-        {
-            id: 2,
-            identifier: "ar.jalalayn",
-            name: "تفسير الجلالين",
-            author: "جلال الدين المحلي وجلال الدين السيوطي",
-            language: "ar"
-        },
-        {
-            id: 3,
-            identifier: "ar.qurtubi",
-            name: "تفسير القرطبي",
-            author: "أبو عبد الله القرطبي",
-            language: "ar"
-        },
-        {
-            id: 4,
-            identifier: "ar.waseet",
-            name: "التفسير الوسيط",
-            author: "محمد سيد طنطاوي",
-            language: "ar"
-        },
-        {
-            id: 5,
-            identifier: "ar.baghawi",
-            name: "تفسير البغوي",
-            author: "الحسين بن مسعود البغوي",
-            language: "ar"
-        },
-        {
-            id: 6,
-            identifier: "ar.miqbas",
-            name: "تنوير المقباس من تفسير ابن عباس",
-            author: "منسوب لابن عباس",
-            language: "ar"
-        }
-    ]
+    // Use static data file
+    const tafseerSources = await import('@/data/tafseer-sources.json')
+    return tafseerSources.default as TafseerSource[]
 }
 
 /**

@@ -414,7 +414,7 @@ interface Surah {
   name: string
   englishName: string
   englishNameTranslation: string
-  numberOfVerses: number
+  numberOfAyahs: number
   revelationType: string
 }
 

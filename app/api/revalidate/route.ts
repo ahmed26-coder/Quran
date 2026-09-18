@@ -22,13 +22,13 @@ export async function GET(req: NextRequest) {
     try {
         // 2. Revalidate by Tag
         if (tag) {
-            revalidateTag(tag);
+            revalidateTag(tag, 'layout');
             return NextResponse.json({ revalidated: true, now: Date.now(), tag });
         }
 
         // 3. Revalidate by Path
         if (path) {
-            revalidatePath(path);
+            revalidatePath(path, 'layout');
             return NextResponse.json({ revalidated: true, now: Date.now(), path });
         }
 

@@ -8,42 +8,16 @@ import { Search, ChevronLeft } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 
 import { SheikhCard } from "@/components/sheikh-card"
+import recitersData from "@/data/reciters.json"
 
 export default function SheikhsPage() {
-  const [sheikhs, setSheikhs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [sheikhs, setSheikhs] = useState<any[]>(recitersData)
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
-    const fetchSheikhs = async () => {
-      try {
-        const response = await fetch("https://mp3quran.net/api/v3/reciters?language=ar", {
-          cache: "force-cache",
-          next: { tags: ["quran:reciters"] }
-        })
-        const data = await response.json()
-        console.log("API Response:", data)
-
-        if (data.reciters) {
-          setSheikhs(data.reciters)
-        }
-      } catch (error) {
-        console.error(" Error fetching sheikhs:", error)
-        setSheikhs([
-          {
-            id: 1,
-            name: "الشيخ عبد الله بصفر",
-            country: "المملكة العربية السعودية",
-            bio: "قارئ قرآن مشهور معروف بصوته الجميل وتجويده الدقيق.",
-            specialties: ["تلاوة القرآن", "التجويد"],
-          },
-        ])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSheikhs()
+    // Data is already loaded from static file
+    setLoading(false)
   }, [])
 
   const filteredSheikhs = sheikhs.filter(

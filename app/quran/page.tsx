@@ -6,7 +6,7 @@ interface Surah {
   name: string
   englishName: string
   englishNameTranslation: string
-  numberOfVerses: number
+  numberOfAyahs: number
   revelationType: string
 }
 
@@ -14,16 +14,11 @@ interface Surah {
 
 async function getSurahs() {
   try {
-    const res = await fetch("http://api.alquran.cloud/v1/surah", {
-      cache: "force-cache",
-      next: { tags: ["quran:surah-list"], revalidate: 3600 } // Cache for 1 hour
-    })
-    if (!res.ok) {
-      throw new Error(`Failed to fetch surahs: ${res.status}`)
-    }
-    return res.json()
+    // Use static data file instead of API
+    const data = await import('@/data/surahs.json')
+    return { data: data.default }
   } catch (error) {
-    console.error("Error fetching surahs:", error)
+    console.error("Error loading surahs:", error)
     return null
   }
 }

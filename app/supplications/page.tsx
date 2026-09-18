@@ -52,6 +52,17 @@ const CATEGORIES = [
   { id: "prophets", title: "أدعية الأنبياء", param: "pd=true" },
 ]
 
+const CATEGORY_MAP: Record<string, string> = {
+  "m=true": "أذكار الصباح",
+  "e=true": "أذكار المساء",
+  "as=true": "أذكار بعد السلام من الصلاة المفروضة",
+  "t=true": "تسابيح",
+  "bs=true": "أذكار النوم",
+  "wu=true": "أذكار الاستيقاظ",
+  "qd=true": "أدعية قرآنية",
+  "pd=true": "أدعية الأنبياء",
+}
+
 export default function SupplicationsPage() {
   return (
     <Suspense fallback={
@@ -107,23 +118,29 @@ function SupplicationsContent() {
     if (!category) return
 
     try {
-      // Fetch all items with returning all=true
-      const res = await fetch(`/api/proxy-azkar?${category.param}&json=true&all=true`, {
-        cache: "no-store"
-      })
+      // Use static data file instead of API
+      const azkarData = await import('@/data/azkar.json')
+      const categoryKey = CATEGORY_MAP[category.param]
+      const categoryData = (azkarData.default as any)[categoryKey]
 
-      if (!res.ok) {
-        throw new Error(`فشل في جلب الأذكار (${res.status})`)
+      if (!categoryData || !Array.isArray(categoryData)) {
+        throw new Error("Category not found")
       }
 
-      const data: AzkarResponse[] = await res.json()
-      setAzkarList(data)
+      const mappedData = categoryData.map((item: any) => ({
+        zekr: item.content,
+        repeat: parseInt(item.count) || 1,
+        bless: item.description || "",
+        source: item.reference || ""
+      }))
+
+      setAzkarList(mappedData)
 
       // Validation: Ensure current index is valid for new list
       const savedIndex = localStorage.getItem(`azkar-index-${categoryId}`)
       const idx = savedIndex ? parseInt(savedIndex, 10) : 0
 
-      if (idx >= data.length) {
+      if (idx >= mappedData.length) {
         setCurrentIndex(0)
       } else {
         setCurrentIndex(idx)

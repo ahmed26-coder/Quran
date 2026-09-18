@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import azkarData from "@/data/azkar.json";
 
 export const dynamic = 'force-dynamic';
-
-const DATA_SOURCE = "https://raw.githubusercontent.com/nawafalqari/azkar-api/master/src/data/adkar.json";
 
 const CATEGORY_MAP: Record<string, string> = {
     "m=true": "أذكار الصباح",
@@ -31,17 +30,8 @@ export async function GET(req: NextRequest) {
     const returnAll = searchParams.get('all') === 'true';
 
     try {
-        // We fetch from GitHub instead of azkar.ml to avoid DNS issues (ENOTFOUND .ml)
-        const res = await fetch(DATA_SOURCE, {
-            cache: "force-cache",
-            next: { tags: ["azkar"] },
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to fetch from GitHub: ${res.status}`);
-        }
-
-        const allData = await res.json();
+        // Use static data instead of fetching from GitHub
+        const allData = azkarData as any;
         const categoryData = allData[categoryKey];
 
         if (!categoryData || !Array.isArray(categoryData)) {
